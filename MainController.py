@@ -10,7 +10,7 @@ import Syren, Fishgait
 class MainController:
 	def __init__(self):
 		bbio_init()
-		self.syren=Syren.Syren(Serial2, 19200) #init syren
+		self.syren=Syren.Syren(Serial1, 19200) #init syren
 		self.syren.update(50) #zero it for now
 		self.leftservo=PWM1A
 		self.rightservo=PWM2A
@@ -19,7 +19,7 @@ class MainController:
 		self.gait=Fishgait.TriangleGait(0.5, 1)
 		#init camera
 		self.cap=cv2.VideoCapture(0) #open default camera
-		if (cap.isOpened()==False):
+		if (self.cap.isOpened()==False):
 			self.cap=False #no camera :(
 	
 	def cleanup(self):
