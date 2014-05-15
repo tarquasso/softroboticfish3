@@ -18,11 +18,12 @@ class MainController:
     def __init__(self):
 	self.ch3max=50
 	self.ch3min=50
+	self.depth=0
         bbio.bbio_init()
         self.syren=Syren.Syren(Serial1, 19200) #init syren
         self.syren.update(50) #zero it for now
-        self.leftservo=bbio.Servo(PWM1A)    #left servo pwm out
-        self.rightservo=bbio.Servo(PWM2A)   #right servo pwm out
+        self.leftservo=PWM1A    #left servo pwm out
+        self.rightservo=PWM2A   #right servo pwm out
         self.sduservo=PWM1B     #servo for static diving unit
         self.ch1=PwmIn.PwmIn(GPIO3_19, 0.001, 0.002) #ch1 pwm in
         self.ch2=PwmIn.PwmIn(GPIO3_17, 0.001, 0.002) #..
@@ -33,7 +34,7 @@ class MainController:
         self.depth_controller.setPoint(20) #input the target depth
         pwmFrequency(self.leftservo, 50) #set the switching frequency of the servo outputs in Hz
         pwmFrequency(self.rightservo, 50)
-        self.gait=Fishgait.SineGait(1.0, 1) #init a triangle-shaped fish gait with amplitude 0.5 and period 1s
+        self.gait=Fishgait.SineGait2(1.0, 1) #init a triangle-shaped fish gait with amplitude 0.5 and period 1s
         #init camera
         # Open the video device.
         self.video = v4l2capture.Video_device("/dev/video0")
@@ -65,7 +66,7 @@ class MainController:
         bbio.bbio_cleanup()
 
     def getDutyCycles(self):
-	buffer=5
+	buffer=1
 	temp=self.ch1.getDuty()
 	if (abs(temp-MainController.ch1Duty)>=buffer):
         	MainController.ch1Duty=temp
@@ -91,6 +92,7 @@ class MainController:
         #self.ids.compute() #start the conversion process so that it's done by the time we use it
         duty=self.gait.compute() #get the current duty cycle
         self.syren.update(duty) #update syren
+	#self.depth=self.ids.getPressure()
         #self.depth_controller.update(self.ids.getDepth())
         #analogWrite(self.leftservo, int(duty), RES_8BIT)
         #analogWrite(self.rightservo, int(duty), RES_8BIT)
@@ -105,10 +107,8 @@ class MainController:
     def handle_rc_control(self):
         #analogWrite(self.leftservo, 0.12*MainController.ch3Duty+13)
         #analogWrite(self.rightservo, 0.12*MainController.ch3Duty+13)
-        self.leftservo.write(MainController.ch3Duty*(180/7.5))
-        self.rightservo.write(MainController.ch3Duty*(180/7.5))
-	self.gait.update_yaw(MainController.ch4Duty)
-        self.gait.update_freq(2*(MainController.ch2Duty/100.0))
+	self.gait.update_yaw(MainController.ch4Duty/100.0)
+        self.gait.update_freq((MainController.ch2Duty/100.0))
         if (self.picture_trigger==False and MainController.ch1Duty<MainController.ch1LowerBound):
             self.picture_trigger=True
             self.take_picture()
@@ -134,5 +134,5 @@ class MainController:
 		self.ch3max=MainController.ch3Duty
 	elif (MainController.ch3Duty<self.ch3min):
 		self.ch3min=MainController.ch3Duty
-	return 'min:%f max:%f' % (self.ch3min, self.ch3max)
-        #return 'frq:%f amp:%f ch1:%i ch2:%i ch3:%i ch4:%i' % (self.gait.get_freq(), self.gait.get_amp(), MainController.ch1Duty, MainController.ch2Duty, MainController.ch3Duty, MainController.ch4Duty)
+	#return 'min:%f max:%f' % (self.ch3min, self.ch3max)
+	return 'frq:%f amp:%f depth:%f ch1:%f ch2:%f ch3:%f ch4:%f' % (self.gait.get_freq(), self.gait.get_amp(), self.depth, MainController.ch1Duty, MainController.ch2Duty, MainController.ch3Duty, MainController.ch4Duty)

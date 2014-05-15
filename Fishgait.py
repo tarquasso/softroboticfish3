@@ -45,7 +45,7 @@ class TriangleGait(fishgait):
             out=0
         return out*100
 
-class SineGait(fishgait):
+class SineGait2(fishgait):
     def __init__(self, freq, amplitude):
         fishgait.__init__(self) #init base class
         self.frq=float(freq)
@@ -67,17 +67,58 @@ class SineGait(fishgait):
     def compute(self):
         period=(1.0/self.frq) #period in sec
         curtime=self.elapsedTime() #read timer in sec
+        out=math.sin(2*math.pi*self.frq*curtime)+self.yaw
+	#out=math.sin(2.0*math.pi*self.frq*curtime)
+        out+=1 #center it around 1
+        out*=0.5 #scale it
+        if (out>1):
+            out=1
+        elif (out<0):
+            out=0
+        return out*100
+
+
+class SineGait(fishgait):
+    def __init__(self, freq, amplitude):
+        fishgait.__init__(self) #init base class
+        self.frq=float(freq)
+        self.amp=float(amplitude)
+        self.fullcycle=True
+        self.yaw=0.6
+    def get_freq(self):
+        return self.frq
+    def get_amp(self):
+        return self.amp
+    def update_freq(self, freq):
+        if (float(freq)>=0.1):
+            self.frq=float(freq)
+    def update_amp(self, amplitude):
+        if (float(amplitude)>=0.1 and float(amplitude)<=1):
+            self.amp=float(amplitude)
+    def update_yaw(self, yaw):
+        self.yaw=2*((yaw/100.0)-0.5)
+    def compute(self):
+        period=(1.0/self.frq) #period in sec
+        curtime=self.elapsedTime() #read timer in sec
         ampNew=self.amp
         if (curtime>(1/(2*self.frq))):
             if (self.fullcycle):
-                ampNew=(1.0+0.7*self.yaw)*self.amp
+		if (self.yaw<0.0):
+			ampNew=(1.0+0.7*self.yaw)*self.amp
+		else:
+			ampNew=self.amp
                 self.fullcycle=False
             else:
                 self.amp*=-1
-                ampNew=(1.0-0.7*self.yaw)*self.amp
+		if (self.yaw>0.0):
+			ampNew=(1.0-0.7*self.yaw)*self.amp
+		else:
+			ampNew=self.amp
                 self.fullcycle=True
-            self.resetTime()
-        out=ampNew*math.sin(2.0*math.pi*self.frq*curtime)
+	    self.resetTime()
+	    curtime=0.0
+        out=ampNew*math.sin(2*math.pi*self.frq*curtime)
+	#out=math.sin(2.0*math.pi*self.frq*curtime)
         out+=1 #center it around 1
         out*=0.5 #scale it
         if (out>1):
