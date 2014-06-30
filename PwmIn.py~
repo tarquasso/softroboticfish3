@@ -50,9 +50,7 @@ class PwmIn:
 #for debugging
 if(__name__ == "__main__"):
 	channel = PwmIn(GPIO1_28, 0, 100)
-	pwmpin=PWM2B
 	def setup():
-		pwmWrite(pwmpin, 50)
 		print "reading 100 times..."
 		for i in xrange(100):
 			print str(channel.getPeriod())
