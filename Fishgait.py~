@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #fish gaits!
-import time
+import time, os, sys
 
 class fishgait:
 	def __init__(self):
@@ -30,3 +30,9 @@ class SawGait(fishgait):
 		elif (out<0):
 			out=0
 		return out*100
+
+
+if (__name__=="__main__"):
+	sgait=SawGait(3.0, 1.0)
+	for i in xrange(10000):
+		print str(sgait.compute())
