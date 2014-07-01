@@ -9,6 +9,7 @@ class Syren:
 
 	def finish(self):
 		self.port.flush()
+		self.port.write(0x7F)
 		self.port.end()
 	
 	def update(self, duty):
