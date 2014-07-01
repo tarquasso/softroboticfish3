@@ -6,6 +6,7 @@ class Syren:
 	def __init__(self, port, baud):
 		self.port=port
 		self.port.begin(baud)
+		self.port.write(0x7F)
 
 	def finish(self):
 		self.port.flush()
