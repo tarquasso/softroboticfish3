@@ -13,18 +13,19 @@ class Syren:
 	
 	def update(self, duty):
 		control=float(duty)*(2.54)
-		self.port.flush()
-		self.port.prints(int(control))
+	#	control=duty
+		#self.port.flush()
+		self.port.write(int(control))
 
 if (__name__=="__main__"):
 	bbio_init()
-	sy=Syren(Serial1, 9600)
-	sy.update(0)
-	time.sleep(1)
-	sy.update(50)
-	time.sleep(1)
+	sy=Syren(Serial2, 19200)
 	sy.update(100)
-	time.sleep(1)
+	time.sleep(3)
+	sy.update(50)
+	time.sleep(3)
+	sy.update(0)
+	time.sleep(3)
 	sy.update(50)
 	sy.finish()
 	bbio_cleanup()
