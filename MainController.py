@@ -11,6 +11,9 @@ class MainController:
 		self.leftservo=PWM2A
 		self.rightservo=PWM2B
 		self.gait=FishGait.SawGait(freq, amp)
+	
+	def cleanup(self):
+		self.syren.finish()
 
 	def control(self):
 		duty=self.gait.compute() #get the current duty cycle
