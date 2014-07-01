@@ -33,6 +33,6 @@ class SawGait(fishgait):
 
 
 if (__name__=="__main__"):
-	sgait=SawGait(100.0, 1.0)
-	for i in xrange(1000):
+	sgait=SawGait(3.0, 1.0)
+	for i in xrange(10000):
 		print str(sgait.compute())

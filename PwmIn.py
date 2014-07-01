@@ -41,7 +41,7 @@ class PwmIn:
 
 	def fall(self):
 		_tmp=time.clock()
-		diff=_tmp-self.time()
+		diff=_tmp-self.time
 		if (diff>5e-4 and dif<0.005 and self.risen==True):
 			self.risen=False
 			self.pulsewidth=diff
