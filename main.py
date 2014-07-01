@@ -17,7 +17,6 @@ if (__name__=="__main__"):
 	print "running. press ctrl-c to kill"
 	while (running==True):
 		mainCtrl.control()
-		delay(10)
 	print "quitting"
 	mainCtrl.cleanup()
 	sys.exit(0)
