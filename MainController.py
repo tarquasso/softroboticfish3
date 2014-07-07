@@ -9,6 +9,8 @@ import Syren, Fishgait, PwmIn, IMUDepthSensor, PID
 #duty cycles will be 0-100
 
 class MainController:
+    ch1UpperBound=90.0
+    ch1LowerBound=10.0
     def __init__(self):
         bbio.bbio_init()
         self.syren=Syren.Syren(Serial1, 19200) #init syren
@@ -25,7 +27,7 @@ class MainController:
         self.depth_controller.setPoint(20) #input the target depth
         pwmFrequency(self.leftservo, 100) #set the switching frequency of the servo outputs in Hz
         pwmFrequency(self.rightservo, 100)
-        self.gait=Fishgait.TriangleGait(0.5, 1) #init a triangle-shaped fish gait with amplitude 0.5 and period 1s
+        self.gait=Fishgait.SineGait(1.0, 1) #init a triangle-shaped fish gait with amplitude 0.5 and period 1s
         #init camera
         # Open the video device.
         self.video = v4l2capture.Video_device("/dev/video0")
@@ -44,6 +46,8 @@ class MainController:
 
         self.video_record=False #true if we're currently recording
         self.f=None #the file to be saved
+        self.video_trigger=True #controller hysteresis variable
+        self.picture_trigger=True
         self.video.start()
 
     def cleanup(self):
@@ -68,30 +72,37 @@ class MainController:
         #analogWrite(self.leftservo, int(duty), RES_8BIT)
         #analogWrite(self.rightservo, int(duty), RES_8BIT)
 
-    def handle_input(self, keycode):
-        amount=0.01
-        keycode=int(keycode) #for safety
-        #keycode is a the ascii keycode of what was pressed
-        if (keycode==ord('w')):
-            self.gait.update_amp(self.gait.get_amp()+amount)
-        elif (keycode==ord('s')):
-            self.gait.update_amp(self.gait.get_amp()-amount)
-        elif (keycode==ord('a')):
-            self.gait.update_freq(self.gait.get_freq()+amount)
-        elif (keycode==ord('d')):
-            self.gait.update_freq(self.gait.get_freq()-amount)
-        elif (keycode==ord('p')):
-            if (self.cap):
-                cv2.imwrite("pic-"+str(time.time())+".png", self.cap.read()[1])
-        elif (keycode==ord('v')):
-            if (self.video_record==True):
-                self.video_record=False
-                self.f.close()
-        #        self.video.close()
-                print 'wrote video'
-            elif (self.video_record==False):
-                self.video_record=True
-       #         self.video.start()
-                self.f=open('video'+str(time.time())+'.raw', 'wb')
+    def take_picture(self):
+        self.size_x, self.size_y=self.video.set_format(1920,1080)
+        select.select((self.video,),(),()) #wait to fill buffer
+        image_data=self.video.read()
+        image=Image.fromstring("RGB", (self.size_x, self.size_y), image_data)
+        image.save("pic"+str(time.time())+".jpg")
+
+    def handle_rc_control(self):
+        analogWrite(self.leftservo, self.ch3.getDuty(), PERCENT)
+        analogWrite(self.rightservo, self.ch3.getDuty(), PERCENT)
+        self.gait.update_yaw(self.ch4.getDuty())
+        self.gait.update_freq(2*(self.ch2.getDuty()/100.0))
+        if (self.picture_trigger==False and self.ch1.getDuty()<MainController.ch1LowerBound):
+            self.picture_trigger=True
+            self.take_picture()
+        elif (self.ch1.getDuty()>MainController.ch1UpperBound):
+            if (self.video_trigger==False):
+                self.video_trigger=True
+                if (self.video_record==True):
+                    self.video_record=False
+                    self.f.close()
+        #           self.video.close()
+                    print 'wrote video'
+                elif (self.video_record==False):
+                    self.video_record=True
+       #            self.video.start()
+                    self.size_x, self.size_y=self.video.set_format(1920,1080,fourcc="H264")
+                    self.f=open('video'+str(time.time())+'.raw', 'wb')
+        elif (self.ch1.getDuty()>MainController.ch1LowerBound and self.ch1.getDuty()<MainController.ch1UpperBound):
+            pass
+            #self.video_trigger=False
+            #self.picture_trigger=False
     def __str__(self):
-        return 'frq:%f amp:%f' % (self.gait.get_freq(), self.gait.get_amp())
+        return 'frq:%f amp:%f ch1:%f' % (self.gait.get_freq(), self.gait.get_amp(), self.ch1.getDuty())

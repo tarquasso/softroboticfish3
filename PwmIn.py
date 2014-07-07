@@ -48,7 +48,7 @@ class PwmIn:
 
 #for debugging
 if(__name__ == "__main__"):
-	channel = PwmIn(GPIO1_28, 0.001, 0.002)
+	channel = PwmIn(GPIO3_17, 0.001, 0.002)
 	count=0
 	def setup():
 		print "reading..."
