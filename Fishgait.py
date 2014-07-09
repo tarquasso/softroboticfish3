@@ -21,7 +21,7 @@ class TriangleGait(fishgait):
 	def get_amp(self):
 		return self.amp
 	def update_freq(self, freq):
-		if (float(freq)>=0.1 and float(freq)<=1):
+		if (float(freq)>=0.1):
 			self.frq=float(freq)
 	def update_amp(self, amplitude):
 		if (float(amplitude)>=0.1 and float(amplitude)<=1):
@@ -55,7 +55,7 @@ class SawGait(fishgait):
 	def get_amp(self):
 		return self.amp
 	def update_freq(self, freq):
-		if (float(freq)>=0.1 and float(freq)<=1):
+		if (float(freq)>=0.1):
 			self.frq=float(freq)
 	def update_amp(self, amplitude):
 		if (float(amplitude)>=0.1 and float(amplitude)<=1):
