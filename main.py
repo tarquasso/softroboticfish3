@@ -15,14 +15,17 @@ if (__name__=="__main__"):
 	window.nodelay(1)
 	signal.signal(signal.SIGINT, signal_handler)
 	mainCtrl=MainController.MainController()
+	window.addstr(str(os.uname())+"\n")
 	window.addstr("running fish brainz! ..send sigint to quit\n")
 	start=time.clock()
 	while (running==True):
 		mainCtrl.handle_input(window.getch())
 		mainCtrl.control()
-		window.addstr(1,0,'uptime: '+str(time.clock()-start))
-		window.addstr(2,0,str(mainCtrl))
+		window.addstr(2,0,'uptime: '+str(time.clock()-start))
+		window.addstr(3,0,str(mainCtrl))
+	window.addstr(4,0,"quitting")
+	time.sleep(1.0)
 	curses.endwin()
-	print "quitting"
 	mainCtrl.cleanup()
+	print "exit success"
 	sys.exit(0)
