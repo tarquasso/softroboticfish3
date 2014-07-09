@@ -8,17 +8,18 @@ from bbio import *
 if (__name__=="__main__"):
 	running=True
 	def signal_handler(signal, frame):
-		print "got sigint"
 		global running
 		running=False
 	
-	signal.signal(signal.SIGINT, signal_handler)
-	mainCtrl=MainController.MainController()
 	window=curses.initscr()
 	window.nodelay(1)
+	signal.signal(signal.SIGINT, signal_handler)
+	mainCtrl=MainController.MainController()
 	window.addstr("running fish brainz!\n")
-	window.addstr("press ctrl-c to kill")
 	while (running==True):
+		ch=window.getch()
+		if (int(ch)>=0):
+			window.addstr(str(ch))
 		mainCtrl.control()
 	curses.endwin()
 	print "quitting"

@@ -11,8 +11,8 @@ class MainController:
 		self.syren.update(50) #zero it for now
 		self.leftservo=PWM1A
 		self.rightservo=PWM2A
-		pwmFrequency(self.leftservo, 200)
-		pwmFrequency(self.rightservo, 200)
+		pwmFrequency(self.leftservo, 100)
+		pwmFrequency(self.rightservo, 100)
 		self.gait=Fishgait.SawGait(0.5, 1)
 	
 	def cleanup(self):
@@ -22,5 +22,5 @@ class MainController:
 	def control(self):
 		duty=self.gait.compute() #get the current duty cycle
 #		self.syren.update(duty) #update syren
-		analogWrite(self.leftservo, int(duty), RES_8BIT)
-		analogWrite(self.rightservo, int(duty), RES_8BIT)
+		#analogWrite(self.leftservo, int(duty), RES_8BIT)
+		#analogWrite(self.rightservo, int(duty), RES_8BIT)
