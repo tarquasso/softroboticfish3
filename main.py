@@ -1,7 +1,7 @@
 #!/usr/bin/python
 '''This is the main run file for the fish control system. run it'''
 
-import os, sys, signal
+import os, sys, signal, curses
 import MainController
 from bbio import *
 
@@ -14,9 +14,13 @@ if (__name__=="__main__"):
 	
 	signal.signal(signal.SIGINT, signal_handler)
 	mainCtrl=MainController.MainController()
-	print "running. press ctrl-c to kill"
+	window=curses.initscr()
+	window.nodelay(1)
+	window.addstr("running fish brainz!\n")
+	window.addstr("press ctrl-c to kill")
 	while (running==True):
 		mainCtrl.control()
+	curses.endwin()
 	print "quitting"
 	mainCtrl.cleanup()
 	sys.exit(0)
