@@ -15,7 +15,16 @@ class SawGait(fishgait):
 		fishgait.__init__(self) #init base class
 		self.frq=float(freq)
 		self.amp=float(amplitude)
-
+	def get_freq(self):
+		return self.frq
+	def get_amp(self):
+		return self.amp
+	def update_freq(self, freq):
+		if (float(freq)>=0.1 and float(freq)<=1):
+			self.frq=float(freq)
+	def update_amp(self, amplitude):
+		if (float(amplitude)>=0.1 and float(amplitude)<=1):
+			self.amp=float(amplitude)
 	def compute(self):
 		period=(1.0/self.frq) #period in sec
 		curtime=self.elapsedTime() #read timer in sec

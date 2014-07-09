@@ -24,3 +24,17 @@ class MainController:
 #		self.syren.update(duty) #update syren
 		#analogWrite(self.leftservo, int(duty), RES_8BIT)
 		#analogWrite(self.rightservo, int(duty), RES_8BIT)
+	def handle_input(self, keycode):
+		amount=0.01
+		keycode=int(keycode) #for safety
+		#keycode is a the ascii keycode of what was pressed
+		if (keycode==ord('w')):
+			self.gait.update_amp(self.gait.get_amp()+amount)
+		elif (keycode==ord('s')):
+			self.gait.update_amp(self.gait.get_amp()-amount)
+		elif (keycode==ord('a')):
+			self.gait.update_freq(self.gait.get_freq()+amount)	
+		elif (keycode==ord('d')):
+			self.gait.update_freq(self.gait.get_freq()-amount)
+	def __str__(self):
+		return 'frq:%f amp:%f' % (self.gait.get_freq(), self.gait.get_amp())
