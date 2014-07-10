@@ -1,5 +1,8 @@
 #!/usr/bin/python
 #This is the main controller class
+import numpy as np #for camera
+import cv2 #for camera
+import time
 from bbio import *
 import Syren, Fishgait
 #duty cycles will be 0-100
@@ -14,8 +17,14 @@ class MainController:
 		pwmFrequency(self.leftservo, 100)
 		pwmFrequency(self.rightservo, 100)
 		self.gait=Fishgait.TriangleGait(0.5, 1)
+		#init camera
+		self.cap=cv2.VideoCapture(0) #open default camera
+		if (cap.isOpened()==False):
+			self.cap=False #no camera :(
 	
 	def cleanup(self):
+		if (self.cap):
+			self.cap.release()
 		self.syren.finish()
 		bbio_cleanup()
 
@@ -36,5 +45,8 @@ class MainController:
 			self.gait.update_freq(self.gait.get_freq()+amount)	
 		elif (keycode==ord('d')):
 			self.gait.update_freq(self.gait.get_freq()-amount)
+		elif (keycode==ord('p')):
+			if (self.cap):
+				cv2.imwrite("pic-"+str(time.time())+".png", self.cap.read()[1])
 	def __str__(self):
 		return 'frq:%f amp:%f' % (self.gait.get_freq(), self.gait.get_amp())
