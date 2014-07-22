@@ -57,7 +57,7 @@ class MainController:
 		elif (keycode==ord('v')):
 			if (self.cap):
 				if (self.video==False):
-					self.video=cv2.VideoWriter('output'+str(time.time())+'.avi', cv2.cv.CV_FOURCC('M','J','P','G'), 20.0, (320,240))
+					self.video=cv2.VideoWriter('output'+str(time.time())+'.avi', cv2.cv.CV_FOURCC('X','2','6','4'), 20.0, (320,240))
 					if (not self.video.isOpened()):
 						self.video=False
 				else:

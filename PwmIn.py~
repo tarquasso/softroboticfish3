@@ -14,13 +14,15 @@ class PwmIn:
 		self.risen=False
 		pinMode(self.pin, INPUT)
 		try:
-			attachInterrupt(self.pin, self.rise, RISING)
-			attachInterrupt(self.pin, self.fall, FALLING)
+#			attachInterrupt(self.pin, self.rise, RISING)
+#			attachInterrupt(self.pin, self.fall, FALLING)
+			attachInterrupt(self.pin, self.edge, BOTH)
 		except RuntimeError:
 			detachInterrupt(self.pin)
 			delay(4000)
-			attachInterrupt(self.pin, self.rise, RISING)
-			attachInterrupt(self.pin, self.fall, FALLING)
+			attachInterrupt(self.pin, self.edge, BOTH)
+			#attachInterrupt(self.pin, self.rise, RISING)
+			#attachInterrupt(self.pin, self.fall, FALLING)
 		self.time=time.clock() #start the timer
 
 	def __del__(self):
@@ -31,6 +33,11 @@ class PwmIn:
 	def getPeriod(self):
 		return self.period
 
+	def edge(self):
+		#we only know its an edge so we must orient ourselves
+		print str(time.clock()-self.time)
+		self.time=time.clock()
+	
 	def rise(self):
 		_tmp=time.clock()
 		diff=_tmp-self.time #look at time difference
@@ -38,23 +45,29 @@ class PwmIn:
 			self.period=diff #know the period
 			self.risen=True #we rose
 			self.time=time.clock() #reset timer
+		attachInterrupt(self.pin, self.fall, FALLING)
 
 	def fall(self):
 		_tmp=time.clock()
-		diff=_tmp-self.time()
-		if (diff>5e-4 and dif<0.005 and self.risen==True):
+		diff=_tmp-self.time
+		if (diff>5e-4 and diff<0.005 and self.risen==True):
 			self.risen=False
 			self.pulsewidth=diff
+		attachInterrupt(self.pin, self.rise, RISING)
 
 
 #for debugging
 if(__name__ == "__main__"):
 	channel = PwmIn(GPIO1_28, 0, 100)
 	def setup():
-		print "reading 100 times..."
-		for i in xrange(100):
-			print str(channel.getPeriod())
+		pwmpin=PWM2B
+		pwmEnable(pwmpin)
+		pwmFrequency(pwmpin, 20)
+		analogWrite(pwmpin, 80, resolution=PERCENT)
+		print "reading..."
 	def loop():
-		sys.exit(0)
+		pass
+		print str(channel.period)
+	#	sys.exit(0)
 	run(setup,loop)
 
