@@ -16,7 +16,7 @@ class IMUDepthSensor:
     _D2_2048 = 0x56
     _D2_4096 = 0x58
     _adcRead = 0x00
-    _promBaseAddress = 0xA0;
+    _promBaseAddress = 0xA0
     def __init__(self):
         self.ByteHigh = 0
         self.ByteLow = 0
@@ -27,8 +27,8 @@ class IMUDepthSensor:
         time.sleep(1)
         for i in range(8):
             self.sendCommand(IMUDepthSensor._promBaseAddress + (2*i))
-            received = Wire2.read(IMUDepthSensor._devAddress,0,2)
-
+            received = Wire2.read(IMUDepthSensor._devAddress,0x00,2)
+            print 'received:',received
             if not isinstance(received,(list,tuple)) or len(received) is not 2:
                 print 'Error: received less or more than two bytes'
             
@@ -44,7 +44,7 @@ class IMUDepthSensor:
 	
     def sendCommand(self, command):
 	print 'command:',command
-        numBytesWritten = Wire2.write(IMUDepthSensor._devAddress,0,command)
+        numBytesWritten = Wire2.write(IMUDepthSensor._devAddress,0x00,command)
         print 'Number of Bytes written:',numBytesWritten
 
 if (__name__=="__main__"): # for debugging purposes when running just this file
