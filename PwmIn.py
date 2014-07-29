@@ -14,6 +14,7 @@ class PwmIn:
 		self.maxPulse=maxPulse
 		self.Rl=0
 		self.Rh=0
+                self.last4=[0,0,0,0]
 		pinMode(self.pin, INPUT)
 		try:
 			attachInterrupt(self.pin, self.edge, BOTH)
@@ -28,12 +29,16 @@ class PwmIn:
 		#cleanup
 		detachInterrupt(self.pin)
 
+        def rotate(self, l, n):
+            return l[n:]+l[:n]
+
 	def getPulse(self):
 		return self.Rh
 
         def getDuty(self):
             prange=self.maxPulse-self.minPulse
-            return 100.0*((self.Rh-prange)/(prange))
+            avg=sum(self.last4)/len(self.last4)
+            return 100.0*((avg-prange)/(prange))
 
 	def edge(self):
 		#we only know its an edge so we must orient ourselves
@@ -41,6 +46,8 @@ class PwmIn:
 		if (dif<=self.maxPulse and dif>self.minPulse):
 			#this was the high pulse. Rh
 			self.Rh=dif
+                        self.last4=self.rotate(self.last4,-1)
+                        self.last4[3]=self.Rh
 		else:
 			#this was the remainder of the pulse. Rl
 			self.Rl=dif
@@ -48,7 +55,10 @@ class PwmIn:
 
 #for debugging
 if(__name__ == "__main__"):
-	channel = PwmIn(GPIO3_17, 0.001, 0.002)
+        ch1=PwmIn(GPIO3_19, 0.001, 0.002) #ch1 pwm in
+        ch2=PwmIn(GPIO3_17, 0.001, 0.002) #..
+        ch3=PwmIn(GPIO3_15, 0.001, 0.002) #..
+        ch4=PwmIn(GPIO3_16, 0.001, 0.002) #..
 	count=0
 	def setup():
 		print "reading..."
@@ -56,9 +66,10 @@ if(__name__ == "__main__"):
 		global count
 		pass
 		if (count>=100000):
-			#print str(channel.times)
-                        print 'Rh:'+str(channel.Rh)+', Rl:'+str(channel.Rl) +', PW:'+str(channel.Rl+channel.Rh) +', DUTY:' + str(channel.getDuty())
-			count=0
+			#print strchannel.times)
+                        #print 'Rh:'+str(channel.Rh)+', Rl:'+str(channel.Rl) +', PW:'+str(channel.Rl+channel.Rh) +', DUTY:' + str(channel.getDuty()) + " " +str(ch2.getDuty())
+			print 'ch1 ' +str(ch1.getDuty()) + ', ch2 ' + str(ch2.getDuty()) + ', ch3 ' + str(ch3.getDuty()) + ', ch4 ' + str(ch4.getDuty())
+                        count=0
 			#sys.exit(0)
 		count+=1
 	#	sys.exit(0)
