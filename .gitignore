@@ -57,3 +57,5 @@ docs/_build/
 #videos and pictures
 *.avi
 *.png
+*.raw
+*.mp4
