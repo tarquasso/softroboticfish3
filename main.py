@@ -24,7 +24,7 @@ if (__name__=="__main__"):
         #mainCtrl.handle_rc_control()
      #   print str(mainCtrl)
         mainCtrl.videocap()
-        if ((time.clock()-start)>0.10):
+        if ((time.clock()-start)>0.005):
             #window.addstr(2,0,'uptime: '+str(time.clock()-start))
             #window.addstr(3,0,str(mainCtrl))
             mainCtrl.getDutyCycles()

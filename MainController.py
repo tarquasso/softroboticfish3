@@ -16,12 +16,14 @@ class MainController:
     ch3Duty=50.0
     ch4Duty=50.0
     def __init__(self):
+	self.ch3max=50
+	self.ch3min=50
         bbio.bbio_init()
         self.syren=Syren.Syren(Serial1, 19200) #init syren
         self.syren.update(50) #zero it for now
-        self.leftservo=PWM1A    #left servo pwm out
-        self.rightservo=PWM2A   #right servo pwm out
-        self.sduservo=PWM2B     #servo for static diving unit
+        self.leftservo=bbio.Servo(PWM1A)    #left servo pwm out
+        self.rightservo=bbio.Servo(PWM2A)   #right servo pwm out
+        self.sduservo=PWM1B     #servo for static diving unit
         self.ch1=PwmIn.PwmIn(GPIO3_19, 0.001, 0.002) #ch1 pwm in
         self.ch2=PwmIn.PwmIn(GPIO3_17, 0.001, 0.002) #..
         self.ch3=PwmIn.PwmIn(GPIO3_15, 0.001, 0.002) #..
@@ -29,8 +31,8 @@ class MainController:
         #self.ids=IMUDepthSensor.IMUDepthSensor() #i2c depth sensor
         self.depth_controller=PID.PID()
         self.depth_controller.setPoint(20) #input the target depth
-        pwmFrequency(self.leftservo, 100) #set the switching frequency of the servo outputs in Hz
-        pwmFrequency(self.rightservo, 100)
+        pwmFrequency(self.leftservo, 50) #set the switching frequency of the servo outputs in Hz
+        pwmFrequency(self.rightservo, 50)
         self.gait=Fishgait.SineGait(1.0, 1) #init a triangle-shaped fish gait with amplitude 0.5 and period 1s
         #init camera
         # Open the video device.
@@ -63,10 +65,19 @@ class MainController:
         bbio.bbio_cleanup()
 
     def getDutyCycles(self):
-        MainController.ch1Duty=self.ch1.getDuty()
-        MainController.ch2Duty=self.ch2.getDuty()
-        MainController.ch3Duty=self.ch3.getDuty()
-        MainController.ch4Duty=self.ch4.getDuty()
+	buffer=5
+	temp=self.ch1.getDuty()
+	if (abs(temp-MainController.ch1Duty)>=buffer):
+        	MainController.ch1Duty=temp
+	temp=self.ch2.getDuty()
+	if (abs(temp-MainController.ch2Duty)>=buffer):
+        	MainController.ch2Duty=temp
+	temp=self.ch3.getDuty()
+	if (abs(temp-MainController.ch3Duty)>=buffer):
+        	MainController.ch3Duty=temp
+	temp=self.ch4.getDuty()
+	if (abs(temp-MainController.ch4Duty)>=buffer):
+        	MainController.ch4Duty=temp
 
     def videocap(self):
         if (self.video_record == True):
@@ -92,9 +103,11 @@ class MainController:
             f.write(image_data)
 
     def handle_rc_control(self):
-        analogWrite(self.leftservo, MainController.ch3Duty, PERCENT)
-        analogWrite(self.rightservo, MainController.ch3Duty, PERCENT)
-        self.gait.update_yaw(MainController.ch4Duty)
+        #analogWrite(self.leftservo, 0.12*MainController.ch3Duty+13)
+        #analogWrite(self.rightservo, 0.12*MainController.ch3Duty+13)
+        self.leftservo.write(MainController.ch3Duty*(180/7.5))
+        self.rightservo.write(MainController.ch3Duty*(180/7.5))
+	self.gait.update_yaw(MainController.ch4Duty)
         self.gait.update_freq(2*(MainController.ch2Duty/100.0))
         if (self.picture_trigger==False and MainController.ch1Duty<MainController.ch1LowerBound):
             self.picture_trigger=True
@@ -117,4 +130,9 @@ class MainController:
             self.picture_trigger=False
     def __str__(self):
         #return str(MainController.ch2Duty)
-        return 'frq:%f amp:%f ch1:%i ch2:%i ch3:%i ch4:%i' % (self.gait.get_freq(), self.gait.get_amp(), MainController.ch1Duty, MainController.ch2Duty, MainController.ch3Duty, MainController.ch4Duty)
+	if (MainController.ch3Duty>self.ch3max):
+		self.ch3max=MainController.ch3Duty
+	elif (MainController.ch3Duty<self.ch3min):
+		self.ch3min=MainController.ch3Duty
+	return 'min:%f max:%f' % (self.ch3min, self.ch3max)
+        #return 'frq:%f amp:%f ch1:%i ch2:%i ch3:%i ch4:%i' % (self.gait.get_freq(), self.gait.get_amp(), MainController.ch1Duty, MainController.ch2Duty, MainController.ch3Duty, MainController.ch4Duty)
