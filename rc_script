@@ -1,0 +1,31 @@
+#! /bin/sh
+# /etc/init.d/blah
+#
+
+# Make sure to load this daemon with
+# 	>update-rc.d rc_script defaults
+#To remove from startup
+#	>update-rc.d -f rc_script remove
+
+# Some things that run always
+touch /var/lock/fishbrainz
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  start)
+    echo "Starting fishbrainz"
+    python /home/debian/fishbrainz/main.py &
+    PID=$!
+    ;;
+  stop)
+    echo "Stopping fishbrainz"
+    kill -INT $PID
+    echo "done"
+    ;;
+  *)
+    echo "Usage: /etc/init.d/blah {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0
