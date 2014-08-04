@@ -3,7 +3,7 @@
 import picamera
 import time
 
-class FishCamera:
+class MbedSpi:
     def __init__(self):
 	#init camera
         # Open the camera device.
