@@ -1,72 +1,44 @@
 #!/usr/bin/python
 #This is the camera class
 import picamera
+import spidev
 import time
 
 class MbedSpi:
+    do_nothing=int(0x00)
+    take_picture=int(0x0A)
+    start_video=int(0xAB)
+    stop_video=int(0xEA)
     def __init__(self):
-	#init camera
-        # Open the camera device.
-	self.camera = picamera.PiCamera()
-	
-        #set default camera values
-        self.camera.sharpness = 0
-	self.camera.contrast = 0
-	self.camera.brightness = 50
-	self.camera.saturation = 0
-	self.camera.ISO = 0
-	self.camera.video_stabilization = False
-	self.camera.exposure_compensation = 0
-	self.camera.exposure_mode = 'auto'
-	self.camera.meter_mode = 'average'
-	self.camera.awb_mode = 'auto'
-	self.camera.image_effect = 'none'
-	self.camera.color_effects = None
-	self.camera.rotation = 0
-	self.camera.hflip = False
-	self.camera.vflip = False
-	self.camera.crop = (0.0, 0.0, 1.0, 1.0)
-
-        self.video_record=False #true if we're currently recording
-        self.f=None #the file to be saved
-        self.video_trigger=True #controller hysteresis variable
-        self.picture_trigger=True
+        #init spi
+        self.spi = spidev.SpiDev()   # create spi object
+        self.spi.open(0, 0)          # open spi port 0, device CE0 (CS 0)
+        self.spi.mode=0
+        self.command=0
+    
     def __enter__(self):
         return self
 
-    def start_preview(self):
-        self.camera.start_preview()
-
-    def take_video(self):
-	self.camera.resolution = (640,480)
-        f = 'vid'+str(time.time())+'.h264'
-        self.camera.start_recording(f)
-        # start timeout timer
-
-        #self.camera.wait_recording(10)
-        #self.camera.stop_recording()
-
-    def stop_video(self):
-        self.camera.stop_recording()
-
-    def take_picture(self):
-	self.camera.resolution = (640,480)
-        f = "pic"+str(time.time())+".jpg"
-        self.camera.capture(f)
+    def command_response(self):
+        #please make sure command is a byte
+        resp=self.spi.xfer2([self.command])
+        self.command=resp[0]
+        return self.command
+    
     def __str__(self):
-        return 'MainController Status:'
+        return 'Spi interface'
+
     def cleanup(self):
-        self.camera.close()
+        self.spi.close()
+
     def __exit__(self,type,value,traceback):
         self.cleanup()
 if (__name__=="__main__"): # for debugging purposes when running just this file
 	print 'Code is running'
-        with FishCamera() as fishCam:
+        with MbedSpi() as spi:
             print 'initialized'
-            #fishCam.start_preview()
-            #fishCam.take_video()
-            fishCam.take_picture()
-            #time.sleep(5)
-            #fishCam.stop_video()
+            while (1):
+                print spi.command_response()
+                time.sleep(0.25)
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

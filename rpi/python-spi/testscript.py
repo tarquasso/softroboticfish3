@@ -1,13 +1,14 @@
 import spidev
 import time
 spi = spidev.SpiDev()   # create spi object
+#spi.mode=3
 spi.open(0, 0)          # open spi port 0, device CE0 (CS 0)
 try:
     while True:
         resp = spi.xfer2([0xAA])    # transfer one byte, will send an array of bytes keeping the CE asserted the whole time.
         #resp = spi.xfer([0xAA])   # will send an array of bytes de-asserting and re-asserting the CE with every byte.
         print resp[0]               # print response 0:
-        time.sleep(1)               # sleep for 0.1 seconds
+        time.sleep(0.25)               # sleep for 0.1 seconds
     #end while
 except KeyboardInterrupt:           # Ctrl+C pressed, so...
     spi.close() # ... close the port before exit 
