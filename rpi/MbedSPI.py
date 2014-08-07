@@ -14,6 +14,8 @@ class MbedSpi:
         self.spi = spidev.SpiDev()   # create spi object
         self.spi.open(0, 0)          # open spi port 0, device CE0 (CS 0)
         self.spi.mode=0
+        self.spi.cshigh=False
+        self.spi.max_speed_hz=1000000
         self.command=0
     
     def __enter__(self):
@@ -21,8 +23,9 @@ class MbedSpi:
 
     def command_response(self):
         #please make sure command is a byte
-        resp=self.spi.xfer2([self.command])
-        self.command=resp[0]
+        self.spi.writebytes([self.command])
+        resp=self.spi.readbytes(1)[0]
+        self.command=resp
         return self.command
     
     def __str__(self):
@@ -39,6 +42,6 @@ if (__name__=="__main__"): # for debugging purposes when running just this file
             print 'initialized'
             while (1):
                 print spi.command_response()
-                time.sleep(0.25)
+                time.sleep(0.1)
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
