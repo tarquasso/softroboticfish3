@@ -4,8 +4,11 @@ from bbio import *
 import time #for timer functionality
 import os, sys
 
+#min is 1.12ms
+#max is 2ms
+
 class PwmIn:
-	def __init__(self, pin, minPulse, maxPulse):
+	def __init__(self, pin, minPulse=0.001, maxPulse=0.002):
 		self.pin=pin
 		self.minPulse=minPulse
 		self.maxPulse=maxPulse
@@ -28,6 +31,10 @@ class PwmIn:
 	def getPulse(self):
 		return self.Rh
 
+        def getDuty(self):
+            prange=self.maxPulse-self.minPulse
+            return 100.0*((self.Rh-prange)/(prange))
+
 	def edge(self):
 		#we only know its an edge so we must orient ourselves
 		dif=time.time()-self.time
@@ -41,7 +48,7 @@ class PwmIn:
 
 #for debugging
 if(__name__ == "__main__"):
-	channel = PwmIn(GPIO1_28, 0, 0.002)
+	channel = PwmIn(GPIO1_28, 0.001, 0.002)
 	count=0
 	def setup():
 		print "reading..."
@@ -50,7 +57,7 @@ if(__name__ == "__main__"):
 		pass
 		if (count>=100000):
 			#print str(channel.times)
-			print 'Rh:'+str(channel.Rh)+', Rl:'+str(channel.Rl) +', PW:'+str(channel.Rl+channel.Rh)
+                        print 'Rh:'+str(channel.Rh)+', Rl:'+str(channel.Rl) +', PW:'+str(channel.Rl+channel.Rh) +', DUTY:' + str(channel.getDuty())
 			count=0
 			#sys.exit(0)
 		count+=1
