@@ -1,4 +1,4 @@
-fishbrainz
+roboticfishraspberry
 ==========
 
-python code to run fish on BBB
+python code to run camera and visual servoing on raspberry pi
