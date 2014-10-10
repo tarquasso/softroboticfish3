@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #This is the MainController class
-import os,sys,time,Camera,MbedSerial
+import os
+os.chdir('/home/pi/fishbrainz/rpi')
+import sys,time,Camera,MbedSerial
 
 
 class MainController:

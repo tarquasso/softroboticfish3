@@ -14,7 +14,7 @@ touch /var/lock/fishbrainz
 case "$1" in
   start)
     echo "Starting fishbrainz"
-    python /home/debian/fishbrainz/main.py &
+    python /home/pi/fishbrainz/rpi/MainController.py &
     PID=$!
     ;;
   stop)
