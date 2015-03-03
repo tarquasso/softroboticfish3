@@ -1,6 +1,9 @@
-roboticfishraspberry
+fish_raspi
 ==========
 
-python code to run camera and visual servoing on raspberry pi
+Structured like ROS package.
 
-Use the setup script located in the rpi folder to setup the raspi after a fresh install
+Code developed to run on raspberry pi in fish head.
+Handles CV from body camera.
+Communicates with mBed controller via USB serial.
+
