@@ -4,7 +4,7 @@ project(fish_raspi)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp roslib)
 find_package(OpenCV)
 
 ## System dependencies are found with CMake's conventions
@@ -89,7 +89,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(
+	${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
 # add_library(fish
@@ -97,17 +100,17 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-# add_executable(fish_node src/fish_node.cpp)
+add_executable(vis_servo src/vis_servo.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(fish_node fish_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(fish_node
-#   ${catkin_LIBRARIES}
-#   ${OpenCV_LIBRARIES}
-# )
+target_link_libraries(vis_servo
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
 
 #############
 ## Install ##
