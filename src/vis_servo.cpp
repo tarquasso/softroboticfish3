@@ -1,46 +1,70 @@
 // vis_servo.cpp
 
-#include <ros/ros.h>
-#include <ros/package.h>
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <string>
 
-#include <iostream>
+#include <stdio.h>
 
 using namespace cv;
 
-float lutFloat[256];
+std::string pkg_path(int p)
+// p is number of parent directory levels to climb
+{
+	std::string s(__FILE__);
+	
+	i = s.length() - 1; // index to last char in string
+	while (i > 0)
+	{
+		if (s[i] == '/' || s[i] == '\\')
+		{
+			// Decrement parent dir counter
+			if (p > 0)
+			{
+				--p;
+			}
+			else
+			{
+				// erase rest of the string
+				s.erase(i);
+			}
+		}
+		++i;
+	}
+
+	if (p > 0)	
+		printf("Unable to climb specified number of levels in file path.");
+
+	return s;
+}
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "vis_servo");
-	ros::NodeHandle nh;
-
-	std::string img_path = ros::package::getPath("fish_raspi") + "/P4_Color_2.jpg";
+	std::string img_path = pkg_path();
+	img_path += "/P4_Color_2.jpg";
+	printf("Importing image file at %s.", img_path.c_str());
 
 	Mat img = imread(img_path.c_str(), CV_LOAD_IMAGE_COLOR);
 	if (img.data == NULL)
 	{
-		ROS_ERROR("Could not read input file.");
+		printf("Could not read input file.");
 		return 1;
 	}
 
 	Size s = img.size();
-	ROS_INFO("Imported %d-channel image of size (%d, %d).", img.channels(), s.width, s.height);
+	printf("Imported %d-channel image of size (%d, %d).", img.channels(), s.width, s.height);
 	switch (img.depth())
 	{
 		case CV_32F:
-			ROS_INFO("Image depth is CV_32F.");
+			printf("Image depth is CV_32F.");
 			break;
 		case CV_8U:
-			ROS_INFO("Image depth is CV_8U.");
+			printf("Image depth is CV_8U.");
 			break;
 		default:
-			ROS_INFO("Unexpected image depth.");
+			printf("Unexpected image depth.");
 			break;
 	}
 
@@ -59,7 +83,7 @@ int main(int argc, char** argv)
 	
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img.total(), 3, CV_32F);
-	ROS_INFO("Converting to float vector.");
+	printf("Converting to float vector.");
 	LUT(img.reshape(1, img.total()), lutFloat, px_array);
 	// Prepare other arguments for kmeans
 	int K = 6;
@@ -70,7 +94,7 @@ int main(int argc, char** argv)
 	int attempts = 10;
 
 	float clustering_coeff = kmeans(px_array, K, labels, termCrit, attempts, flags, centers);
-	ROS_INFO("Kmeans successful with clustering coefficient %f.", clustering_coeff );
+	printf("Kmeans successful with clustering coefficient %f.", clustering_coeff );
 
 	// prepare reconstruction table
 	Mat colorTable(1, K, CV_8UC3);
@@ -85,16 +109,16 @@ int main(int argc, char** argv)
 	
 	if (!colorTable.isContinuous())
 	{
-		ROS_ERROR("LUT not continuous.");
+		printf("LUT not continuous.");
 	}
 
 	switch (colorTable.depth())
 	{
 		case CV_8U:
-			ROS_INFO("Reconstruction table completed. %d channels with depth CV_8U. Total = %d.", colorTable.channels(), (int) colorTable.total());
+			printf("Reconstruction table completed. %d channels with depth CV_8U. Total = %d.", colorTable.channels(), (int) colorTable.total());
 			break;
 		default:
-			ROS_INFO("Reconstruction table completed. %d channels with unrecognized depth. Total = %d.", colorTable.channels(), (int) colorTable.total());
+			printf("Reconstruction table completed. %d channels with unrecognized depth. Total = %d.", colorTable.channels(), (int) colorTable.total());
 			break;
 	}
 
