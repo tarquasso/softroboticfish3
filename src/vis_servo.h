@@ -1,23 +1,19 @@
-// vis_servo.cpp
+// vis_servo.h
 
-#include <opencv2/opencv.hpp>
+#ifndef VIS_SERVO_H
+#define VIS_SERVO_H
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <string>
 #include <stdio.h>
-
-#include "util.h"
 
 using namespace cv;
 
-int main(int argc, char** argv)
+void color_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
 {
-	std::string img_path = pkg_path(1);
-	img_path += "/P4_Color_2.jpg";
-	printf("Importing image file at %s.", img_path.c_str());
+	Mat img = imread(img_file, CV_LOAD_IMAGE_COLOR);
 
-	Mat img = imread(img_path.c_str(), CV_LOAD_IMAGE_COLOR);
 	if (img.data == NULL)
 	{
 		printf("Could not read input file.");
@@ -57,7 +53,6 @@ int main(int argc, char** argv)
 	printf("Converting to float vector.");
 	LUT(img.reshape(1, img.total()), lutFloat, px_array);
 	// Prepare other arguments for kmeans
-	int K = 6;
 	TermCriteria termCrit(TermCriteria::COUNT + TermCriteria::EPS, 50, 0.001);
 	Mat labels(img.total(), 1, CV_8U);
 	Mat centers(K, img.channels(), CV_32F);
@@ -142,9 +137,8 @@ int main(int argc, char** argv)
 		circle(r_img, center, radius, color, thickness, linetype);
 	}
 
-
-	//namedWindow("reduced image", WINDOW_AUTOSIZE);
-	//imshow("reduced image", r_img);
-	waitKey();
-	return 0;
 }
+
+
+
+#endif
