@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	img_path += "/P4_Color_2.jpg";
 	printf("Importing image file at %s.", img_path.c_str());
 
-	Mat img = imread(img_path.c_str(), CV_LOAD_IMAGE_COLOR);
+	Mat img = imread(img_path.c_str());
 	if (img.data == NULL)
 	{
 		printf("Could not read input file.");
