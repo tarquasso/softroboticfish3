@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 {
 	std::string img_path = pkg_path(1);
 	img_path += "/P4_Color_2.jpg";
-	printf("Importing image file at %s.", img_path.c_str());
+	printf("Importing image file at %s.\n", img_path.c_str());
 
 	Mat img = imread(img_path.c_str());
 	if (img.data == NULL)
@@ -145,6 +145,7 @@ int main(int argc, char** argv)
 
 	//namedWindow("reduced image", WINDOW_AUTOSIZE);
 	//imshow("reduced image", r_img);
-	waitKey();
+	//waitKey();
+
 	return 0;
 }
