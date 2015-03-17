@@ -10,7 +10,6 @@ std::string pkg_path(int p)
 // p is number of parent directory levels to climb
 {
 	std::string s(__FILE__);
-	
 	int i = s.length() - 1; // index to last char in string
 	while (i > 0)
 	{
@@ -25,12 +24,13 @@ std::string pkg_path(int p)
 			{
 				// erase rest of the string
 				s.erase(i);
+				break;
 			}
 		}
-		++i;
+		--i;
 	}
 
-	if (p > 0)	
+	if (p > 0)
 		printf("Unable to climb specified number of levels in file path.");
 
 	return s;
