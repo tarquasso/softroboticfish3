@@ -21,9 +21,9 @@ int main(int argc, char** argv)
 	img_path += "/P4_Color_2.jpg";
 	printf("Importing image file at %s.\n", img_path.c_str());
 
-	intialize();
+	initialize();
 
-	Mat img = imread(img_path, CV_LOAD_IMAGE_COLOR);
+	Mat img = imread(img_path, IMREAD_COLOR);
 	Mat centroids(2, K, CV_32S);
 	Mat colors(1, K, CV_8UC3);
 	Mat labels(img.total(), 1, CV_8U);
