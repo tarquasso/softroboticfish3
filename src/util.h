@@ -36,6 +36,4 @@ std::string pkg_path(int p)
 	return s;
 }
 
-
-
 #endif

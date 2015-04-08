@@ -58,7 +58,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	LUT(img->reshape(1, img->total()), lutFloat, px_array);
 
 	// Do kmeans with global parameters
-	Mat centers(K, img.channels(), CV_32F);
+	Mat centers(K, img->channels(), CV_32F);
 	float clustering_coeff = kmeans(px_array, K, labels, termCrit, attempts, flags, centers);
 	printf("Kmeans successful with clustering coefficient %f.", clustering_coeff );
 
@@ -66,7 +66,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	MatIterator_<uchar> lit, lend;
 	int i, j;	// i = row, j = column index
 	i = j = 0;
-	for (lit=labels.begin<uchar>(), len=labels.end<uchar>(); lit != lend; lit++)
+	for (lit=labels.begin<uchar>(), lend=labels.end<uchar>(); lit != lend; lit++)
 	{
 		// Count pixel coord in color centroid calculation
 		centroids.at<int32_t>(0,*lit) += i;
@@ -84,7 +84,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 
 	// Convert centers (floats) to colors
 	// populate reconstruction table
-	for (u=0; u<K; u++)
+	for (int u=0; u<K; u++)
 	{
 		Vec3b color;
 		color[0] = centers.at<float>(u, 0) * 256;
@@ -109,6 +109,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	}
 
 	return;
+}
 
 void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 {
@@ -149,7 +150,5 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 
 	return;
 }
-
-
 
 #endif
