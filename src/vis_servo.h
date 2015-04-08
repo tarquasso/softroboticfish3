@@ -10,36 +10,19 @@
 
 using namespace cv;
 
-void color_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
+// Look up table for color to float conversion
+Mat lutFloat(1, 256, CV_32F);
+bool initialized = false;
+
+// Parameters for kmeans
+TermCriteria termCrit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
+Mat labels(img.total(), 1, CV_8U);
+Mat centers(K, img.channels(), CV_32F);
+int flags = KMEANS_RANDOM_CENTERS;
+int attempts = 10;
+
+void initialize()
 {
-	Mat img = imread(img_file, CV_LOAD_IMAGE_COLOR);
-
-	if (img.data == NULL)
-	{
-		printf("Could not read input file.");
-		return 1;
-	}
-
-	Size s = img.size();
-	printf("Imported %d-channel image of size (%d, %d).", img.channels(), s.width, s.height);
-	switch (img.depth())
-	{
-		case CV_32F:
-			printf("Image depth is CV_32F.");
-			break;
-		case CV_8U:
-			printf("Image depth is CV_8U.");
-			break;
-		default:
-			printf("Unexpected image depth.");
-			break;
-	}
-
-	//namedWindow("image", WINDOW_AUTOSIZE);
-	//imshow("image", img);
-
-	// Prepare LUT for conversion from uchar
-	Mat lutFloat(1, 256, CV_32F);
 	MatIterator_<float> it, end;
 	int u = 0;
 	for (it=lutFloat.begin<float>(), end=lutFloat.end<float>(); it != end; ++it)
@@ -47,51 +30,76 @@ void color_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
 		*it = u/(256.0);
 		u++;
 	}
+
+	initialized = true;
+}
+
+void get_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
+{
+	if (!initialized)
+	{
+		printf("Must call initialize() first.\n");
+		return;
+	}
+
+	Mat img = imread(img_file, CV_LOAD_IMAGE_COLOR);
+
+	if (img.data == NULL)
+	{
+		printf("Could not read input file.\n");
+		return 1;
+	}
+
+	Size s = img.size();
+	printf("Imported %d-channel image of size (%d, %d).\n", img.channels(), s.width, s.height);
+	switch (img.depth())
+	{
+		case CV_32F:
+			printf("Image depth is CV_32F.\n");
+			break;
+		case CV_8U:
+			printf("Image depth is CV_8U.\n");
+			break;
+		default:
+			printf("Unexpected image depth.\n");
+			break;
+	}
 	
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img.total(), 3, CV_32F);
 	printf("Converting to float vector.");
 	LUT(img.reshape(1, img.total()), lutFloat, px_array);
-	// Prepare other arguments for kmeans
-	TermCriteria termCrit(TermCriteria::COUNT + TermCriteria::EPS, 50, 0.001);
-	Mat labels(img.total(), 1, CV_8U);
-	Mat centers(K, img.channels(), CV_32F);
-	int flags = KMEANS_RANDOM_CENTERS;
-	int attempts = 10;
 
+	// Do kmeans with global parameters
 	float clustering_coeff = kmeans(px_array, K, labels, termCrit, attempts, flags, centers);
 	printf("Kmeans successful with clustering coefficient %f.", clustering_coeff );
 
-	// prepare reconstruction table
-	Mat colorTable(1, K, CV_8UC3);
+	// populate reconstruction table
 	for (u=0; u<K; u++)
 	{
 		Vec3b color;
 		color[0] = centers.at<float>(u, 0) * 256;
 		color[1] = centers.at<float>(u, 1) * 256;
 		color[2] = centers.at<float>(u, 2) * 256;
-		colorTable.at<Vec3b>(u) = color;
+		colors.at<Vec3b>(u) = color;
 	}
 	
-	if (!colorTable.isContinuous())
+	if (!colors.isContinuous())
 	{
 		printf("LUT not continuous.");
 	}
 
-	switch (colorTable.depth())
+	switch (colors.depth())
 	{
 		case CV_8U:
-			printf("Reconstruction table completed. %d channels with depth CV_8U. Total = %d.", colorTable.channels(), (int) colorTable.total());
+			printf("Reconstruction table completed. %d channels with depth CV_8U. Total = %d.\n", colors.channels(), (int) colors.total());
 			break;
 		default:
-			printf("Reconstruction table completed. %d channels with unrecognized depth. Total = %d.", colorTable.channels(), (int) colorTable.total());
+			printf("Reconstruction table completed. %d channels with unrecognized depth. Total = %d.\n", colors.channels(), (int) colors.total());
 			break;
 	}
 
-	std::cout << colorTable << std::endl;
-
-	// Calculate color centroids and reconstruct reduced image
-	Mat colorCentroids = Mat::zeros(3, K, CV_32S);
+	std::cout << colors << std::endl;
 
 	Mat r_img(s.height, s.width, CV_8UC3);
 	MatIterator_<Vec3b> dit, dend;
@@ -102,12 +110,12 @@ void color_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
 	for (dit=r_img.begin<Vec3b>(), dend=r_img.end<Vec3b>(); dit != dend; ++dit, ++lit)
 	{
 		// Color pixel according to label
-		*dit = colorTable.at<Vec3b>(*lit);
+		*dit = colors.at<Vec3b>(*lit);
 		
 		// Count pixel coord in color centroid calculation
-		colorCentroids.at<int32_t>(0,*lit) += i;
-		colorCentroids.at<int32_t>(1,*lit) += j;
-		colorCentroids.at<int32_t>(2,*lit) += 1;
+		centroids.at<int32_t>(0,*lit) += i;
+		centroids.at<int32_t>(1,*lit) += j;
+		centroids.at<int32_t>(2,*lit) += 1;
 
 		// Count current pixel coordinate
 		j++;
@@ -122,14 +130,14 @@ void color_centroids(const char* img_file, int K, Mat & centroids, Mat & colors)
 	for (int k=0; k < K; k++)
 	{
 		Point center;
-		int num_samples = colorCentroids.at<int32_t>(2,k);
-		center.y = colorCentroids.at<int32_t>(0,k) / (float) num_samples;
-		center.x = colorCentroids.at<int32_t>(1,k) / (float) num_samples;
+		int num_samples = centroids.at<int32_t>(2,k);
+		center.y = centroids.at<int32_t>(0,k) / (float) num_samples;
+		center.x = centroids.at<int32_t>(1,k) / (float) num_samples;
 		
 		int thickness = 2;
 		float radius = s.width/64.0;
 		int linetype = 1;
-		Vec3b color_v = colorTable.at<Vec3b>(k);
+		Vec3b color_v = colors.at<Vec3b>(k);
 		uchar b = color_v[0];
 		uchar g = color_v[1];
 		uchar r = color_v[2];
