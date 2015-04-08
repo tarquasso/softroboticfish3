@@ -18,38 +18,11 @@ int main(int argc, char** argv)
 	img_path += "/P4_Color_2.jpg";
 	printf("Importing image file at %s.\n", img_path.c_str());
 
-	Mat centroids = Mat::zeros(3, K, CV_32S);
-	Mat colors = Mat::zeros(1, K, CV_UC3);
-
-	colorCentroids(img_path.c_str(), 6, )
-
-	// Calculate color centroids and reconstruct reduced image
-	Mat colorCentroids = Mat::zeros(3, K, CV_32S);
-
-	Mat r_img(s.height, s.width, CV_8UC3);
-	MatIterator_<Vec3b> dit, dend;
-	MatIterator_<uchar> lit = labels.begin<uchar>();
-	int i,j;
-	i = j = 0;
-
-	for (dit=r_img.begin<Vec3b>(), dend=r_img.end<Vec3b>(); dit != dend; ++dit, ++lit)
-	{
-		// Color pixel according to label
-		*dit = colorTable.at<Vec3b>(*lit);
-		
-		// Count pixel coord in color centroid calculation
-		colorCentroids.at<int32_t>(0,*lit) += i;
-		colorCentroids.at<int32_t>(1,*lit) += j;
-		colorCentroids.at<int32_t>(2,*lit) += 1;
-
-		// Count current pixel coordinate
-		j++;
-		if (j == s.width) // wraparound when we get to end of row
-		{
-			j = 0;
-			i++;
-		}
-	}
+	Mat img = imread(img_path, CV_LOAD_IMAGE_COLOR);
+	Mat centroids(2, K, CV_32S);
+	Mat colors(1, K, CV_UC3);
+	Mat labels(img.total(), 1, CV_8U);
+	get_centroids(&img, 6, centroids, colors, lables)
 
 	// Normalize and draw circles at centroids
 	for (int k=0; k < K; k++)
@@ -69,7 +42,6 @@ int main(int argc, char** argv)
 		Scalar color(b,g,r);
 		circle(r_img, center, radius, color, thickness, linetype);
 	}
-
 
 	namedWindow("reduced image", WINDOW_AUTOSIZE);
 	imshow("reduced image", r_img);
