@@ -50,7 +50,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 		return;
 	}
 
-	Size s = Mat.size();
+	Size s = img->size();
 
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img->total(), 3, CV_32F);
