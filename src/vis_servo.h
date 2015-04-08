@@ -50,7 +50,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 		return;
 	}
 
-	s = Mat.size();
+	Size s = Mat.size();
 
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img->total(), 3, CV_32F);
@@ -126,6 +126,7 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 	}
 
 	// Normalize and draw circles at centroids
+	int K = centroids.total();
 	for (int k=0; k < K; k++)
 	{
 		Point center;

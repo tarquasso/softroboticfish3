@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include <string>
 #include <stdio.h>
@@ -11,6 +12,8 @@
 #include "vis_servo.h"
 
 using namespace cv;
+
+#define K 3
 
 int main(int argc, char** argv)
 {
@@ -22,7 +25,7 @@ int main(int argc, char** argv)
 	Mat centroids(2, K, CV_32S);
 	Mat colors(1, K, CV_UC3);
 	Mat labels(img.total(), 1, CV_8U);
-	get_centroids(&img, 6, centroids, colors, labels);
+	get_centroids(&img, K, centroids, colors, labels);
 
 	reconstruct(img.size(), centroids, colors, labels);
 
