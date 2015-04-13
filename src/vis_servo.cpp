@@ -6,30 +6,57 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <string>
+#include <cstring>
 #include <stdio.h>
+#include <iostream>
 
 #include "util.h"
 #include "vis_servo.h"
 
 using namespace cv;
 
-#define K 3
-
 int main(int argc, char** argv)
 {
-	std::string img_path = pkg_path(1);
-	img_path += "/P4_Color_2.jpg";
-	printf("Importing image file at %s.\n", img_path.c_str());
+	// Extract command line arguments
+	int K = 3;
+	std::string filename("P4_Color_2.jpg");
+	for (int i=0; i<argc; i++)
+	{
+		// Parse string
+		if (strncmp(argv[i], "K=", 2) == 0)
+		{
+			K = atoi(argv[i] + 2);
+		}
+		else if (strncmp(argv[i], "file=", 5) == 0)
+		{
+			filename = std::string(argv[i] + 5);
+		}
+		else
+		{
+			printf("Invalid argument: %s.\n", argv[i]);
+		}
+	}
 
-	initialize();
+	printf("K = %d.\n", K);
+	std::string img_path = pkg_path(1);
+	img_path += '/' + filename;
+	printf("Importing image file %s.\n", filename.c_str());
+
+	initialize(K);
 
 	Mat img = imread(img_path, IMREAD_COLOR);
-	Mat centroids(2, K, CV_32S);
+	namedWindow("image", WINDOW_AUTOSIZE);
+	imshow("image", img);
+	Mat centroids(3, K, CV_16U);
 	Mat colors(1, K, CV_8UC3);
 	Mat labels(img.total(), 1, CV_8U);
 	get_centroids(&img, K, centroids, colors, labels);
 
-	//reconstruct(img.size(), centroids, colors, labels);
+	std::cout << centroids << std::endl;
+
+	reconstruct(img.size(), centroids, colors, labels);
+
+	cleanup();
 
 	return 0;
 }

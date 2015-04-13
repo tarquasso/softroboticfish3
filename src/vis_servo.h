@@ -14,13 +14,17 @@ using namespace cv;
 Mat lutFloat(1, 256, CV_32F);
 bool initialized = false;
 
+// Helper array for centroid calculation
+long long * x_counts;
+long long * y_counts;
+long long * num_pixels;
+
 // Parameters for kmeans
-TermCriteria termCrit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
+#define KMEANS_TERM_CRIT TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01)
+#define KMEANS_FLAGS KMEANS_RANDOM_CENTERS
+#define KMEANS_ATTEMPTS 10
 
-int flags = KMEANS_RANDOM_CENTERS;
-int attempts = 10;
-
-void initialize()
+void initialize(int K)
 {
 	MatIterator_<float> it, end;
 	int u = 0;
@@ -30,7 +34,18 @@ void initialize()
 		u++;
 	}
 
+	x_counts = new long long[K];
+	y_counts = new long long[K];
+	num_pixels = new long long[K];
+
 	initialized = true;
+}
+
+void cleanup()
+{
+	delete[] num_pixels;
+	delete[] y_counts;
+	delete[] x_counts;
 }
 
 void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & labels)
@@ -59,19 +74,27 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 
 	// Do kmeans with global parameters
 	Mat centers(K, img->channels(), CV_32F);
-	float clustering_coeff = kmeans(px_array, K, labels, termCrit, attempts, flags, centers);
+	float clustering_coeff = kmeans(px_array, K, labels, KMEANS_TERM_CRIT, KMEANS_ATTEMPTS, KMEANS_FLAGS, centers);
 	printf("Kmeans successful with clustering coefficient %f.", clustering_coeff );
 
-	// Calculate centroids
+	/* Calculate centroids */
+	for (int k=0; k<K; k++)		// re-zero helper arrays
+	{
+		x_counts[k] = 0;
+		y_counts[k] = 0;
+		num_pixels[k] = 0;
+	}
+
 	MatIterator_<uchar> lit, lend;
 	int i, j;	// i = row, j = column index
 	i = j = 0;
+
 	for (lit=labels.begin<uchar>(), lend=labels.end<uchar>(); lit != lend; lit++)
 	{
 		// Count pixel coord in color centroid calculation
-		centroids.at<int32_t>(0,*lit) += i;
-		centroids.at<int32_t>(1,*lit) += j;
-		centroids.at<int32_t>(2,*lit) += 1;
+		x_counts[*lit] += j;
+		y_counts[*lit] += i;
+		num_pixels[*lit]++;
 
 		// Increment current pixel coordinates
 		j++;
@@ -83,9 +106,15 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	}
 
 	// Convert centers (floats) to colors
-	// populate reconstruction table
+	// populate color reconstruction table
+	// and complete centroid calculation
+	printf("centroid table dimensions (%d, %d).\n", centroids.size().height, centroids.size().width);
 	for (int u=0; u<K; u++)
 	{
+		centroids.at<uint16_t>(0,u) = x_counts[u] / num_pixels[u];	// calculate average pixel column
+		centroids.at<uint16_t>(1,u) = y_counts[u] / num_pixels[u];	// calculate average pixel row
+		centroids.at<uint16_t>(2,u) = 1;
+
 		Vec3b color;
 		color[0] = centers.at<float>(u, 0) * 256;
 		color[1] = centers.at<float>(u, 1) * 256;
@@ -98,15 +127,9 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 		printf("LUT not continuous.");
 	}
 
-	switch (colors.depth())
-	{
-		case CV_8U:
-			printf("Reconstruction table completed. %d channels with depth CV_8U. Total = %d.\n", colors.channels(), (int) colors.total());
-			break;
-		default:
-			printf("Reconstruction table completed. %d channels with unrecognized depth. Total = %d.\n", colors.channels(), (int) colors.total());
-			break;
-	}
+	delete[] num_pixels;
+	delete[] y_counts;
+	delete[] x_counts;
 
 	return;
 }
@@ -126,13 +149,13 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 	}
 
 	// Normalize and draw circles at centroids
-	int K = centroids.total();
+	int K = centroids.size().width;
+	printf("K  = %d.\n", K);
 	for (int k=0; k < K; k++)
 	{
 		Point center;
-		int num_samples = centroids.at<int32_t>(2,k);
-		center.y = centroids.at<int32_t>(0,k) / (float) num_samples;
-		center.x = centroids.at<int32_t>(1,k) / (float) num_samples;
+		center.x = centroids.at<uint16_t>(0,k);
+		center.y = centroids.at<uint16_t>(1,k);
 		
 		int thickness = 2;
 		float radius = s.width/64.0;
@@ -142,6 +165,8 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 		uchar g = color_v[1];
 		uchar r = color_v[2];
 		Scalar color(b,g,r);
+		Scalar white(255, 255, 255);
+		circle(r_img, center, radius*1.5, white, thickness, linetype);
 		circle(r_img, center, radius, color, thickness, linetype);
 	}
 
