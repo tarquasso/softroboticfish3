@@ -11,7 +11,7 @@
 using namespace cv;
 
 // Look up table for color to float conversion
-Mat lutFloat(1, 256, CV_32F);
+Mat lutFloatWeighted(1, 256, CV_32FC3);
 bool initialized = false;
 
 // Helper array for centroid calculation
@@ -20,17 +20,26 @@ long long * y_counts;
 long long * num_pixels;
 
 // Parameters for kmeans
-#define KMEANS_TERM_CRIT TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01)
 #define KMEANS_FLAGS KMEANS_RANDOM_CENTERS
 #define KMEANS_ATTEMPTS 10
+TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
+
+#define FT_0_WT 5.0f
+#define FT_1_WT 2.0f
+#define FT_2_WT 1.0f
 
 void initialize(int K)
 {
-	MatIterator_<float> it, end;
+	MatIterator_<Vec3f> it, end;
 	int u = 0;
-	for (it=lutFloat.begin<float>(), end=lutFloat.end<float>(); it != end; ++it)
+	Vec3f v;
+	for (it=lutFloatWeighted.begin<Vec3f>(), end=lutFloatWeighted.end<Vec3f>(); it != end; ++it)
 	{
-		*it = u/(256.0);
+		// Apply weightings
+		v[0] = u * (FT_0_WT/256.0); // hue
+		v[1] = u * (FT_1_WT/256.0); // saturation
+		v[2] = u * (FT_2_WT/256.0); // value 
+		*it = v;
 		u++;
 	}
 
@@ -46,6 +55,45 @@ void cleanup()
 	delete[] num_pixels;
 	delete[] y_counts;
 	delete[] x_counts;
+}
+
+void convert_to_feature_space(const Mat& src, Mat& out, Size s)
+{
+	cvtColor(src, out, CV_BGR2HSV, 3); 		// remap color space
+	LUT(out, lutFloatWeighted, out);		// change to float and apply weights
+	out = out.reshape(1, src.total());
+	printf("out depht = %d.", out.depth());
+}
+
+void convert_from_feature_space(const Mat& src, Mat& out, int K)
+{
+	Mat img = src.reshape(3,K);
+
+	// remove weighting factor
+	MatIterator_<Vec3f> cit, cend; 
+	for (cit=img.begin<Vec3f>(), cend=img.end<Vec3f>(); cit!=cend; ++cit)
+	{
+		Vec3f v_a = *cit;
+		Vec3f v_b;
+		v_b[0] = v_a[0]/FT_0_WT;
+		v_b[1] = v_a[1]/FT_1_WT;
+		v_b[2] = v_a[2]/FT_2_WT;
+		*cit = v_b;
+	}
+
+	cvtColor(img, img, CV_HSV2BGR, 3); // remap color space
+	out = img;
+	for (int k=0; k<K; k++)
+	{
+		Vec3f c_f= img.at<Vec3f>(k);
+		Vec3b c_b;
+		c_b[0] = c_f[0] * 256;
+		c_b[1] = c_f[1] * 256;
+		c_b[2] = c_f[2] * 256;
+		out.at<Vec3b>(k) = c_b;
+	}
+	
+	return;
 }
 
 void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & labels)
@@ -66,16 +114,19 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	}
 
 	Size s = img->size();
+	printf("Image has dimensions (%d, %d).\n", s.height, s.width);
 
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img->total(), 3, CV_32F);
-	printf("Converting to float vector.");
-	LUT(img->reshape(1, img->total()), lutFloat, px_array);
+	convert_to_feature_space(*img, px_array, s);
+	printf("Converting to float vector.\n");
+	printf("Float array dimensions (%d, %d) with depth %d.\n", px_array.size().height, px_array.size().width, px_array.depth());
 
 	// Do kmeans with global parameters
-	Mat centers(K, img->channels(), CV_32F);
-	float clustering_coeff = kmeans(px_array, K, labels, KMEANS_TERM_CRIT, KMEANS_ATTEMPTS, KMEANS_FLAGS, centers);
-	printf("Kmeans successful with clustering coefficient %f.", clustering_coeff );
+	Mat centers;
+	//Mat centers(K, img->channels(), CV_32F);
+	float clustering_coeff = kmeans(px_array, K, labels, term_crit, KMEANS_ATTEMPTS, KMEANS_FLAGS, centers);
+	printf("Kmeans successful with clustering compactness %f.\n", clustering_coeff );
 
 	/* Calculate centroids */
 	for (int k=0; k<K; k++)		// re-zero helper arrays
@@ -105,31 +156,25 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 		}
 	}
 
-	// Convert centers (floats) to colors
-	// populate color reconstruction table
-	// and complete centroid calculation
-	printf("centroid table dimensions (%d, %d).\n", centroids.size().height, centroids.size().width);
+	// complete centroid calculation
 	for (int u=0; u<K; u++)
 	{
 		centroids.at<uint16_t>(0,u) = x_counts[u] / num_pixels[u];	// calculate average pixel column
 		centroids.at<uint16_t>(1,u) = y_counts[u] / num_pixels[u];	// calculate average pixel row
 		centroids.at<uint16_t>(2,u) = 1;
-
-		Vec3b color;
-		color[0] = centers.at<float>(u, 0) * 256;
-		color[1] = centers.at<float>(u, 1) * 256;
-		color[2] = centers.at<float>(u, 2) * 256;
-		colors.at<Vec3b>(u) = color;
 	}
-	
+
+	// Convert centers (floats) to colors
+	// populate color reconstruction table
+	Size centers_s = centers.size();
+	printf("centers dimensions (%d, %d) with depth %d.\n", centers_s.height, centers_s.width, centers.depth());
+	convert_from_feature_space(centers, colors, K);
+	printf("color depth %d.\n", colors.depth());
+
 	if (!colors.isContinuous())
 	{
 		printf("LUT not continuous.");
 	}
-
-	delete[] num_pixels;
-	delete[] y_counts;
-	delete[] x_counts;
 
 	return;
 }
