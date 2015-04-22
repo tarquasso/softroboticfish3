@@ -24,9 +24,17 @@ long long * num_pixels;
 #define KMEANS_ATTEMPTS 10
 TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
 
-#define FT_0_WT 5.0f
-#define FT_1_WT 2.0f
+#define FT_0_WT 10.0f
+#define FT_1_WT 3.0f
 #define FT_2_WT 1.0f
+
+// target color
+Vec3b target_bgr;
+Vec3f target_ftr;
+
+// Function headers
+void convert_to_feature_space(const Mat& src, Mat& out, Size s);
+void convert_from_feature_space(const Mat& src, Mat& out, Size out_s);
 
 void initialize(int K)
 {
@@ -47,6 +55,20 @@ void initialize(int K)
 	y_counts = new long long[K];
 	num_pixels = new long long[K];
 
+	// define target BGR
+	target_bgr[0] = 89;	// blue
+	target_bgr[1] = 67;	// green
+	target_bgr[2] = 151; // red
+
+	Mat target_bgr_m(1,1,CV_8UC3);
+	target_bgr_m.at<Vec3b>(0) = target_bgr;
+	target_bgr_m.reshape(1);
+	// now convert to feature space
+	Mat target_ftr_m(3,1,CV_32F);
+	convert_to_feature_space(target_bgr_m, target_ftr_m, Size(3,1));
+	target_ftr_m.reshape(3);
+	target_ftr = target_ftr_m.at<Vec3f>(0);
+
 	initialized = true;
 }
 
@@ -62,41 +84,139 @@ void convert_to_feature_space(const Mat& src, Mat& out, Size s)
 	cvtColor(src, out, CV_BGR2HSV, 3); 		// remap color space
 	LUT(out, lutFloatWeighted, out);		// change to float and apply weights
 	out = out.reshape(1, src.total());
-	printf("out depht = %d.", out.depth());
 }
 
-void convert_from_feature_space(const Mat& src, Mat& out, int K)
+void convert_from_feature_space(const Mat& src, Mat& out, Size out_s)
 {
-	Mat img = src.reshape(3,K);
+	Mat img(out_s, CV_8UC3);
 
 	// remove weighting factor
-	MatIterator_<Vec3f> cit, cend; 
-	for (cit=img.begin<Vec3f>(), cend=img.end<Vec3f>(); cit!=cend; ++cit)
+	// and convert to CV_8UC3
+	MatConstIterator_<float> cit = src.begin<float>();
+	MatConstIterator_<float> cend = src.end<float>();
+	MatIterator_<Vec3b> oit = img.begin<Vec3b>();
+
+	while (cit!=cend)
 	{
-		Vec3f v_a = *cit;
-		Vec3f v_b;
-		v_b[0] = v_a[0]/FT_0_WT;
-		v_b[1] = v_a[1]/FT_1_WT;
-		v_b[2] = v_a[2]/FT_2_WT;
-		*cit = v_b;
+		// Populate temp vector
+		Vec3b v;
+		v[0] = *cit * (256.0/FT_0_WT);
+		++cit;
+		v[1] = *cit * (256.0/FT_1_WT);
+		++cit;
+		v[2] = *cit * (256.0/FT_2_WT);
+		++cit;
+
+		// Store in img
+		*oit = v;
+		++oit;		
 	}
 
-	cvtColor(img, img, CV_HSV2BGR, 3); // remap color space
-	out = img;
-	for (int k=0; k<K; k++)
+	printf("converting from feature space.");
+	print_dim("src", src);
+	print_dim("img", img);
+
+	if (oit != img.end<Vec3b>())
 	{
-		Vec3f c_f= img.at<Vec3f>(k);
-		Vec3b c_b;
-		c_b[0] = c_f[0] * 256;
-		c_b[1] = c_f[1] * 256;
-		c_b[2] = c_f[2] * 256;
-		out.at<Vec3b>(k) = c_b;
+		printf("Output iterator misaligned. ERRROR.");
 	}
-	
+
+	cvtColor(img, out, CV_HSV2BGR, 3); // remap color space
+	print_dim("out", out);
 	return;
 }
 
-void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & labels)
+void sort_colors(const Mat& colors, const Vec3f& t, Mat& colors_sorted)
+{
+	printf("Sorting...");
+	print_dim("colors", colors);
+
+	int K = colors.size().height;
+	Mat distances = Mat(K, 1, CV_32F);
+	
+	// calculate distances
+	for (int k=0; k<K; k++)
+	{
+		float d = 0;
+		d += pow( t[0] - colors.at<float>(k,0), 2);
+		d += pow( t[1] - colors.at<float>(k,1), 2);
+		d += pow( t[2] - colors.at<float>(k,2), 2);
+		distances.at<float>(k) = d;
+	}
+
+	// now sort
+	int min_k;
+	float min_d;
+	for (int i=0; i<K; i++)
+	{
+		// find ith lowest distance
+		min_k = K;
+		min_d = -1.0; // XXX
+		for (int j=0; j<K; j++)
+		{
+			// grab distance from table
+			float d = distances.at<float>(j);
+			if (d < 0)
+			{
+				// negative (invalid) entry, so skip
+				continue;
+			}
+			else if (min_d < 0 || d < min_d)
+			{
+				min_d = d;
+				min_k = j;
+			}
+		}
+		// Now we should j -> ith nearest color
+		if (min_k == K)
+		{
+			// we didn't find one for some reason
+			printf("Error in sorting. Didn't find min k for %d-th closest color.", i+1);
+		}
+		else
+		{
+			// copy into sorted table
+			colors_sorted.at<float>(i,0) = colors.at<float>(min_k,0);
+			colors_sorted.at<float>(i,1) = colors.at<float>(min_k,1);
+			colors_sorted.at<float>(i,2) = colors.at<float>(min_k,2);
+			// wipe entry in distance table
+			distances.at<float>(min_k) = -1.0;
+		}
+	}
+
+	print_dim("colors_sorted", colors_sorted);
+
+	return;
+}
+
+int find_nearest_to_target(const Mat& centers, int K, const Vec3f t)
+{
+	// now sort
+	int min_k;
+	float min_d;
+	// find ith lowest distance
+	min_k = 0;
+	min_d = -1.0; // XXX
+	float d;
+
+	// calculate distances
+	for (int k=0; k<K; k++)
+	{
+		d  = pow( t[0] - centers.at<float>(k,0), 2);
+		d += pow( t[1] - centers.at<float>(k,1), 2);
+		d += pow( t[2] - centers.at<float>(k,2), 2);
+
+		if (min_d < 0 || d < min_d)
+		{
+			min_d = d;
+			min_k = k;
+		}
+	}
+
+	return min_k;
+}
+
+int get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & labels)
 /* 	Input:
 	img: pointer to img matrix
 	K: number of colors to use
@@ -110,7 +230,7 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 	if (!initialized)
 	{
 		printf("Must call initialize() first.\n");
-		return;
+		return 0;
 	}
 
 	Size s = img->size();
@@ -164,22 +284,21 @@ void get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & l
 		centroids.at<uint16_t>(2,u) = 1;
 	}
 
-	// Convert centers (floats) to colors
-	// populate color reconstruction table
-	Size centers_s = centers.size();
-	printf("centers dimensions (%d, %d) with depth %d.\n", centers_s.height, centers_s.width, centers.depth());
-	convert_from_feature_space(centers, colors, K);
-	printf("color depth %d.\n", colors.depth());
+	/* populate color reconstruction table */
+	int nearest_k = find_nearest_to_target(centers, K, target_ftr);
+	print_dim("centers", centers);
+	convert_from_feature_space(centers, colors, Size(K,1));
+	print_dim("color table", colors);
 
 	if (!colors.isContinuous())
 	{
 		printf("LUT not continuous.");
 	}
 
-	return;
+	return nearest_k;
 }
 
-void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
+void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels, int nearest_k)
 {
 	Mat r_img(s.height, s.width, CV_8UC3);
 	MatIterator_<Vec3b> dit, dend;
@@ -211,6 +330,10 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels)
 		uchar r = color_v[2];
 		Scalar color(b,g,r);
 		Scalar white(255, 255, 255);
+		if (k==nearest_k)
+		{
+			white = Scalar(0,255,0);
+		}
 		circle(r_img, center, radius*1.5, white, thickness, linetype);
 		circle(r_img, center, radius, color, thickness, linetype);
 	}

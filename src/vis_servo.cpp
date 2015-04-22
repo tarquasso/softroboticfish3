@@ -47,15 +47,16 @@ int main(int argc, char** argv)
 	Mat img = imread(img_path, IMREAD_COLOR);
 	namedWindow("image", WINDOW_AUTOSIZE);
 	imshow("image", img);
+
 	Mat centroids(3, K, CV_16U);
 	Mat colors(1, K, CV_8UC3);
 	Mat labels(img.total(), 1, CV_8U);
-	get_centroids(&img, K, centroids, colors, labels);
+	int nearest_centroid = get_centroids(&img, K, centroids, colors, labels);
 
 	std::cout << centroids << std::endl;
 
-	reconstruct(img.size(), centroids, colors, labels);
-
+	reconstruct(img.size(), centroids, colors, labels, nearest_centroid);
+	
 	cleanup();
 
 	return 0;

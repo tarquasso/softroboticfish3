@@ -6,6 +6,8 @@
 #include <string>
 #include <stdio.h>
 
+#include <opencv2/core/core.hpp>
+
 std::string pkg_path(int p)
 // p is number of parent directory levels to climb
 {
@@ -34,6 +36,12 @@ std::string pkg_path(int p)
 		printf("Unable to climb specified number of levels in file path.");
 
 	return s;
+}
+
+void print_dim(const char* name, const cv::Mat& m)
+{
+	printf("Matrix %s has dimensions (%d,%d), %d channels, and depth %d.\n", name, m.size().height, m.size().width, m.channels(), m.depth());
+	return;
 }
 
 #endif
