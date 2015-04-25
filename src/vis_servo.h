@@ -28,15 +28,15 @@ TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
 #define FT_1_WT 3.0f
 #define FT_2_WT 1.0f
 
-// target color
-Vec3b target_bgr;
+// target color in feature space
 Vec3f target_ftr;
 
 // Function headers
 void convert_to_feature_space(const Mat& src, Mat& out, Size s);
 void convert_from_feature_space(const Mat& src, Mat& out, Size out_s);
+void set_target_bgr(Vec3b bgr);
 
-void initialize(int K)
+void initialize(int K, Vec3b bgr)
 {
 	MatIterator_<Vec3f> it, end;
 	int u = 0;
@@ -55,13 +55,15 @@ void initialize(int K)
 	y_counts = new long long[K];
 	num_pixels = new long long[K];
 
-	// define target BGR
-	target_bgr[0] = 89;	// blue
-	target_bgr[1] = 67;	// green
-	target_bgr[2] = 151; // red
+	set_target_bgr(bgr);
 
+	initialized = true;
+}
+
+void set_target_bgr(Vec3b bgr)
+{
 	Mat target_bgr_m(1,1,CV_8UC3);
-	target_bgr_m.at<Vec3b>(0) = target_bgr;
+	target_bgr_m.at<Vec3b>(0) = bgr;
 	target_bgr_m.reshape(1);
 	// now convert to feature space
 	Mat target_ftr_m(3,1,CV_32F);
@@ -69,7 +71,7 @@ void initialize(int K)
 	target_ftr_m.reshape(3);
 	target_ftr = target_ftr_m.at<Vec3f>(0);
 
-	initialized = true;
+	return;
 }
 
 void cleanup()
@@ -330,7 +332,7 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels, int nearest_k
 		uchar r = color_v[2];
 		Scalar color(b,g,r);
 		Scalar white(255, 255, 255);
-		if (k==nearest_k)
+		if (k == nearest_k)
 		{
 			white = Scalar(0,255,0);
 		}
