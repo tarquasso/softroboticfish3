@@ -218,7 +218,7 @@ int find_nearest_to_target(const Mat& centers, int K, const Vec3f t)
 	return min_k;
 }
 
-int get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & labels)
+int get_centroids(const Mat& img, int K, Mat & centroids, Mat & colors, Mat & labels)
 /* 	Input:
 	img: pointer to img matrix
 	K: number of colors to use
@@ -235,18 +235,18 @@ int get_centroids(const Mat* img, int K, Mat & centroids, Mat & colors, Mat & la
 		return 0;
 	}
 
-	Size s = img->size();
+	Size s = img.size();
 	printf("Image has dimensions (%d, %d).\n", s.height, s.width);
 
 	// Convert to CV_32F pixel array for kmeans
-	Mat px_array(img->total(), 3, CV_32F);
-	convert_to_feature_space(*img, px_array, s);
+	Mat px_array(img.total(), 3, CV_32F);
+	convert_to_feature_space(img, px_array, s);
 	printf("Converting to float vector.\n");
 	printf("Float array dimensions (%d, %d) with depth %d.\n", px_array.size().height, px_array.size().width, px_array.depth());
 
 	// Do kmeans with global parameters
 	Mat centers;
-	//Mat centers(K, img->channels(), CV_32F);
+	//Mat centers(K, img.channels(), CV_32F);
 	float clustering_coeff = kmeans(px_array, K, labels, term_crit, KMEANS_ATTEMPTS, KMEANS_FLAGS, centers);
 	printf("Kmeans successful with clustering compactness %f.\n", clustering_coeff );
 

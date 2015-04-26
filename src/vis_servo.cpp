@@ -11,11 +11,16 @@
 #include <cstring>
 #include <stdio.h>
 #include <iostream>
+#include <cstdlib>
 
 #include "util.h"
 #include "vis_servo.h"
 
 #include <ros/ros.h>
+
+
+#define RES_W 320
+#define RES_H 240
 
 using namespace cv;
 
@@ -60,7 +65,7 @@ int main(int argc, char** argv)
 	Mat centroids(3, K, CV_16U);
 	Mat colors(1, K, CV_8UC3);
 	Mat labels(img.total(), 1, CV_8U);
-	int nearest_centroid = get_centroids(&img, K, centroids, colors, labels);
+	int nearest_centroid = get_centroids(img, K, centroids, colors, labels);
 
 	std::cout << centroids << std::endl;
 
@@ -71,7 +76,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-void cam_poll()
+int cam_poll()
 {
 	// default arguments
 	int K = 3;
@@ -79,43 +84,67 @@ void cam_poll()
 	target_bgr[0] = 89;	// blue
 	target_bgr[1] = 67;	// green
 	target_bgr[2] = 151; // red
+	std::string img_path = pkg_path(1) + "images/";
 
 	// initialize cv 
 	initialize(K, target_bgr);
 
 	// initialize raspicam
 	raspicam::RaspiCam cam;
-	cam.open();
+	printf("Opening raspicam.\n");
+	cam.open(false);	// don't start capturing yet
 	if (!cam.isOpened())
 	{
-		printf("Failed to open raspicam.");
+		printf("Failed to open raspicam.\n");
 	}
 
 	// configure camera
-	cam.setWidth(320);
-	cam.setHeight(240);
-	cam.setVideoStabilization(false);
+	cam.setWidth(RES_W);
+	cam.setHeight(RES_H);
+	cam.setVideoStabilization(true);
 	cam.setHorizontalFlip(false);
 	cam.setVerticalFlip(false);
+	cam.setFormat(raspicam::RASPICAM_FORMAT_BGR);
 
+	printf("Starting capture.\n");
+	cam.startCapture();
 
+	int mat_shape[2] = {RES_W, RES_H};
+
+	int frame_id = 0;
+	char* filename = new char[10];
+	
 	while (true)
 	{
-		// import last image
+		// grab image
+		cam.grab();
 
-		// command new pic
+		// import into Mat object
+		Mat frame(2, mat_shape, CV_8UC3, (void*) cam.getImageBufferData(), 0);
 
-		// process last image 
+		// save image to file for testing purposes
+		std::sprintf(filename, "frame%d.jpg", frame_id);
+		imwrite((img_path + filename).c_str(), frame);
+		
 		// calculate centroids
-		// calculate target color area (ie if we are "close")
+		Mat centroids(3, K, CV_16U);
+		Mat colors(1, K, CV_8UC3);
+		Mat labels(frame.total(), 1, CV_8U);
+		int nearest_centroid = get_centroids(frame, K, centroids, colors, labels);
 
-		// if we've reached target, report it
+		// XXX vectorize and publish nearest centroid location
 
-		// wait until camera has finished taking image
+		// XXX calculate target color area (ie if we are "close")
 
+		// XXX if we've reached target, report it
+
+		frame_id++;
 	}
 
+	delete[] filename;
 	// release camera
 	cam.release();
-	return;
+	// cleanup cv
+	cleanup();
+	return 0;
 }
