@@ -36,6 +36,7 @@ void convert_to_feature_space(const Mat& src, Mat& out, Size s);
 void convert_from_feature_space(const Mat& src, Mat& out, Size out_s);
 void set_target_bgr(Vec3b bgr);
 
+
 void initialize(int K, Vec3b bgr)
 {
 	MatIterator_<Vec3f> it, end;

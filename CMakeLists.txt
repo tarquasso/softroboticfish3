@@ -100,12 +100,17 @@ include_directories(include
 ## Declare a cpp executable
 add_executable(vis_servo src/vis_servo.cpp)
 
+add_executable(usb_comm src/usb_comm.cpp)
+
 target_link_libraries(vis_servo
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 			${raspicam_LIBRARIES}
 			)
 
+target_link_libraries(usb_comm
+			${catkin_LIBRARIES}
+			)
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(iarc_ekf roscpp)

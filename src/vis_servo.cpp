@@ -25,6 +25,9 @@
 
 using namespace cv;
 
+int cv_test(int argc, char** argv);
+int cam_poll(int argc, char** argv);
+
 // Ros service wrapper
 bool set_target_bgr_cb(fishcode::SetTargetColorBgr::Request &req, fishcode::SetTargetColorBgr::Response &res)
 {
@@ -36,7 +39,13 @@ bool set_target_bgr_cb(fishcode::SetTargetColorBgr::Request &req, fishcode::SetT
 
 int main(int argc, char** argv)
 {
+	cam_poll(argc, argv);
 
+	return 0;
+}
+
+int cv_test(int argc, char** argv)
+{
 	// Extract command line arguments
 	int K = 3;
 	std::string filename("P4_Color_2.jpg");
@@ -83,10 +92,8 @@ int main(int argc, char** argv)
 	reconstruct(img.size(), centroids, colors, labels, nearest_centroid);
 	
 	cleanup();
-
 	return 0;
 }
-
 int cam_poll(int argc, char** argv)
 {
 	// default arguments
