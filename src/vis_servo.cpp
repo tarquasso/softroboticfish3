@@ -16,8 +16,8 @@
 #include "util.h"
 #include "vis_servo.h"
 
-#include <ros/ros.h>
-
+#include "ros/ros.h"
+#include "fishcode/VisOffset.h"
 
 #define RES_W 320
 #define RES_H 240
@@ -26,6 +26,7 @@ using namespace cv;
 
 int main(int argc, char** argv)
 {
+
 	// Extract command line arguments
 	int K = 3;
 	std::string filename("P4_Color_2.jpg");
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-int cam_poll()
+int cam_poll(int argc, char** argv)
 {
 	// default arguments
 	int K = 3;
@@ -98,6 +99,11 @@ int cam_poll()
 		printf("Failed to open raspicam.\n");
 	}
 
+	// initialize ros
+	ros::init(argc, argv, "vis_servo");
+	ros::NodeHandle nh;
+	ros::Publisher pub = nh.advertise<fishcode::VisOffset>("vis_offset", 5);
+
 	// configure camera
 	cam.setWidth(RES_W);
 	cam.setHeight(RES_H);
@@ -113,11 +119,13 @@ int cam_poll()
 
 	int frame_id = 0;
 	char* filename = new char[10];
+	float fill_share;
 	
-	while (true)
+	while (ros::ok())
 	{
 		// grab image
 		cam.grab();
+		ros::Time now = ros::Time::now();
 
 		// import into Mat object
 		Mat frame(2, mat_shape, CV_8UC3, (void*) cam.getImageBufferData(), 0);
@@ -125,19 +133,29 @@ int cam_poll()
 		// save image to file for testing purposes
 		std::sprintf(filename, "frame%d.jpg", frame_id);
 		imwrite((img_path + filename).c_str(), frame);
+		printf("Frame captured and saved in %s.\n", filename);
 		
 		// calculate centroids
 		Mat centroids(3, K, CV_16U);
 		Mat colors(1, K, CV_8UC3);
 		Mat labels(frame.total(), 1, CV_8U);
 		int nearest_centroid = get_centroids(frame, K, centroids, colors, labels);
+		float fill_share = calc_fill_share(labels, nearest_centroid);
 
-		// XXX vectorize and publish nearest centroid location
+		float xoff = ((float) (centroids.at<uint8_t>(0,nearest_centroid) - (RES_W/2))) / RES_W;
+		float yoff = ((float) (centroids.at<uint8_t>(1,nearest_centroid) - (RES_H/2))) / RES_H;
 
-		// XXX calculate target color area (ie if we are "close")
+		// now publish
+		fishcode::VisOffset vmsg;
+		vmsg.timestamp = now;
+		vmsg.xoff = xoff;
+		vmsg.yoff = yoff;
+		vmsg.b = target_bgr[0];
+		vmsg.g = target_bgr[1];
+		vmsg.r = target_bgr[2];
+		vmsg.fill_share = fill_share;
 
-		// XXX if we've reached target, report it
-
+		pub.publish(vmsg);
 		frame_id++;
 	}
 

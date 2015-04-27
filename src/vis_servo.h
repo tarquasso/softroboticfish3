@@ -300,6 +300,27 @@ int get_centroids(const Mat& img, int K, Mat & centroids, Mat & colors, Mat & la
 	return nearest_k;
 }
 
+float calc_fill_share(const Mat& labels, int k)
+{
+	// calculate how much of color k we see in image
+	int c = 0;
+	int t = labels.total();
+	MatConstIterator_<uint8_t> it, it_end;
+	it = labels.begin<uint8_t>();
+	it_end = labels.end<uint8_t>();
+	for (; it!=it_end; ++it)
+	{
+		// if label matches
+		if (*it == k)
+		{
+			// increment counter
+			c++;
+		}
+	}
+
+	return ((float) c) / t;
+}
+
 void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels, int nearest_k)
 {
 	Mat r_img(s.height, s.width, CV_8UC3);
