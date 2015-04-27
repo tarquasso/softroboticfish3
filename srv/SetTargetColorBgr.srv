@@ -1,0 +1,9 @@
+# SetTargetColorBgr.srv
+
+int8 b
+int8 g
+int8 r
+
+---
+
+bool success

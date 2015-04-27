@@ -18,11 +18,21 @@
 
 #include "ros/ros.h"
 #include "fishcode/VisOffset.h"
+#include "fishcode/SetTargetColorBgr.h"
 
 #define RES_W 320
 #define RES_H 240
 
 using namespace cv;
+
+// Ros service wrapper
+bool set_target_bgr_cb(fishcode::SetTargetColorBgr::Request &req, fishcode::SetTargetColorBgr::Response &res)
+{
+	Vec3b bgr(req.b, req.g, req.r);
+	set_target_bgr(bgr);
+	res.success = true;
+	return true;
+}
 
 int main(int argc, char** argv)
 {
@@ -103,6 +113,7 @@ int cam_poll(int argc, char** argv)
 	ros::init(argc, argv, "vis_servo");
 	ros::NodeHandle nh;
 	ros::Publisher pub = nh.advertise<fishcode::VisOffset>("vis_offset", 5);
+	ros::ServiceServer set_bgr_srv = nh.advertiseService("set_target_bgr", set_target_bgr_cb);
 
 	// configure camera
 	cam.setWidth(RES_W);
