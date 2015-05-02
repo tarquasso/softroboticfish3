@@ -103,7 +103,7 @@ int cam_poll(int argc, char** argv)
 	target_bgr[0] = 89;	// blue
 	target_bgr[1] = 67;	// green
 	target_bgr[2] = 151; // red
-	std::string img_path = pkg_path(1) + "images/";
+	std::string img_path = pkg_path(1) + "/images/";
 
 	// initialize cv 
 	initialize(K, target_bgr);
@@ -153,7 +153,7 @@ int cam_poll(int argc, char** argv)
 		// save image to file for testing purposes
 		std::sprintf(filename, "frame%d.jpg", frame_id);
 		imwrite((img_path + filename).c_str(), frame);
-		printf("Frame captured and saved in %s.\n", filename);
+		printf("Frame captured and saved in %s.\n",(img_path+filename).c_str());
 		
 		// calculate centroids
 		Mat centroids(3, K, CV_16U);
