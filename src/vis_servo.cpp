@@ -20,8 +20,8 @@
 #include "fishcode/VisOffset.h"
 #include "fishcode/SetTargetColorBgr.h"
 
-#define RES_W 320
-#define RES_H 240
+#define RES_W 1280
+#define RES_H 960
 
 using namespace cv;
 
@@ -110,8 +110,9 @@ int cam_poll(int argc, char** argv)
 
 	// initialize raspicam
 	raspicam::RaspiCam_Cv cam;
+
 	printf("Opening raspicam.\n");
-	cam.open();	// open but don't start capturing yet
+	cam.open();	// open and start capturing
 	if (!cam.isOpened())
 	{
 		printf("Failed to open raspicam.\n");
@@ -125,12 +126,13 @@ int cam_poll(int argc, char** argv)
 	ros::ServiceServer set_bgr_srv = nh.advertiseService("set_target_bgr", set_target_bgr_cb);
 
 	// configure camera
+	cam.set(CV_CAP_PROP_FORMAT, CV_8UC3);
 	cam.set(CV_CAP_PROP_FRAME_WIDTH, RES_W);
 	cam.set(CV_CAP_PROP_FRAME_HEIGHT, RES_H);
-	cam.set(CV_CAP_PROP_EXPOSURE, -1); // auto exposure
-
-	printf("Starting capture.\n");
-	cam.startCapture();
+	cam.set(CV_CAP_PROP_BRIGHTNESS, 50);
+	cam.set(CV_CAP_PROP_CONTRAST, 50);
+	cam.set(CV_CAP_PROP_SATURATION, 50);
+	cam.set(CV_CAP_PROP_GAIN, 50);
 
 	int mat_shape[2] = {RES_W, RES_H};
 
@@ -148,12 +150,13 @@ int cam_poll(int argc, char** argv)
 
 		// import into Mat object
 		cam.retrieve(frame);
+		print_dim("Frame", frame);
 
 		// save image to file for testing purposes
 		std::sprintf(filename, "frame%d.jpg", frame_id);
 		imwrite((img_path + filename).c_str(), frame);
 		printf("Frame captured and saved in %s.\n",(img_path+filename).c_str());
-		
+
 		// calculate centroids
 		Mat centroids(3, K, CV_16U);
 		Mat colors(1, K, CV_8UC3);
@@ -175,6 +178,8 @@ int cam_poll(int argc, char** argv)
 		vmsg.fill_share = fill_share;
 
 		pub.publish(vmsg);
+
+		printf("\n");
 		frame_id++;
 	}
 

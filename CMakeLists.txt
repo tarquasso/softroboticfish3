@@ -10,8 +10,6 @@ find_package(OpenCV REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-find_library(raspicam_LIBRARIES raspicam /usr/local/lib/)
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -106,7 +104,8 @@ add_executable(usb_comm src/usb_comm.cpp)
 target_link_libraries(vis_servo
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
-			${raspicam_LIBRARIES}
+			/usr/local/lib/libraspicam.so.0.1
+			/usr/local/lib/libraspicam_cv.so
 			)
 
 target_link_libraries(usb_comm
