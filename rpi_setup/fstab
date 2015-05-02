@@ -1,0 +1,8 @@
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    ro          	  0       0
+/dev/mmcblk0p2  /               ext4    ro		  0       0
+/dev/mmcblk0p3  /home		ext4	defaults,errors=remount-ro 0 2
+none 		/var/run	ramfs	size=1M		0	0
+none		/var/log	ramfs 	size=1M		0	0
+# a swapfile is not a swap partition, so no using swapon|off from here on, use  dphys-swapfile swap[on|off]  for that
+/dev/sda     /media/mbed     vfat     rw,user,exec,umask=000     0     2
