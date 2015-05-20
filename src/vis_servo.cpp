@@ -39,8 +39,8 @@ bool set_target_bgr_cb(fishcode::SetTargetColorBgr::Request &req, fishcode::SetT
 
 int main(int argc, char** argv)
 {
-	//cam_poll(argc, argv);
-	cv_test(argc, argv);
+	cam_poll(argc, argv);
+	//cv_test(argc, argv);
 
 	return 0;
 }
