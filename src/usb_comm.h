@@ -43,7 +43,7 @@ private:
 
 
 public:
-	SerialComm();
+	SerialComm(ros::NodeHandle& nh);
 	~SerialComm();
 
 	void spin();

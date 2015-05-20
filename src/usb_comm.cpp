@@ -4,15 +4,25 @@
 #include <cstdio>
 #include <string>
 
+#define MSG_ID_SET_SWIM_MODE 0x1
+#define MSG_ID_SET_SWIM_MODE_BTTN_RQST 0x2
+#define MSG_ID_VIS_TARGET 0x3
+
 int main(int argc, char** argv)
 {
+	ros::init(argc, argv, "usb_comm");
+	ros::NodeHandle nh;
+
+	SerialComm serial_comm(nh);
+
+	ros::spin();
 
 	return 0;
 }
 
-SerialComm::SerialComm()
+SerialComm::SerialComm(ros::NodeHandle& nh)
 {
-	_nh = ros::NodeHandle("serial_comm");
+	_nh = nh;
 
 	std::string port_name = "/dev/ttyUSB0";
 	printf("Opening serial port at %s.\n", port_name.c_str());
@@ -40,7 +50,6 @@ SerialComm::SerialComm()
 	set_swim_mode_rqst_pub = _nh.advertise<fishcode::SetSwimMode>("fishcode/swim_mode_rqst", 1);
 	set_swim_mode_sub =  _nh.subscribe<fishcode::SetSwimMode>("fishcode/swim_mode_set", 1, boost::bind(&SerialComm::SetSwimMode_cb, this, _1));
 	vis_offset_sub =  _nh.subscribe<fishcode::VisOffset>("fishcode/vis_offset", 1, boost::bind(&SerialComm::VisOffset_cb, this, _1));
-
 }
 
 SerialComm::~SerialComm()
@@ -130,12 +139,19 @@ void SerialComm::spin()
 void SerialComm::handle_msg(const char* buf, int msg_len)
 {
     int msg_id = buf[0];    // first byte
-    switch (msg_id)
+    if (msg_id == MSG_ID_SET_SWIM_MODE_BTTN_RQST)
     {
-        default:
-        	// currently no supported message types
-            printf("WARN: SerialComm recieved unrecognized message of type %d.\n", msg_id);
-            break; // ignore for now
+		// Publish it in ROS
+		fishcode::SetSwimMode mode_rqst;
+		mode_rqst.mode = buf[1];
+		mode_rqst.timestamp = ros::Time::now();
+
+		set_swim_mode_rqst_pub.publish(mode_rqst);
+	}
+    else
+    {
+    	// currently no supported message types
+        printf("WARN: SerialComm recieved unrecognized message of type %d.\n", msg_id);
     }
 }
 
