@@ -39,29 +39,34 @@ $ sudo dd bs=1m if=2015-05-05-raspbian-wheezy.img of=/dev/disk1
 3. Hook RPi to power and ethernet(access to internet).
 Connect To RPi with a screen via hdmi and boot rpi up.
 
-4. in ‘raspi-config’ shown on attached screen: 
+4. in ‘raspi-config’ shown on attached screen:
+Change Password (option 1) to ‘opadula1’ 
 Enable Camera (option 5.)
 Advanced options (option 8.)
 	A4 SSH (enable)
 	A0 Update tool to the latest version
 <Finish> raspi-config 
 
-5. Upgrade/update kernel
-	sudo apt-get update
-	sudo apt-get upgrade
-
-6. Set up partition table
-	Expand mmcblk0p2 to reasonable size (4 GB) for system files:
+5. Set up partition table
+	Expand mmcblk0p2 to reasonable size (5 GB) for system files:
 	$ sudo fdisk /dev/mmcblk0
 	command: p
 	then command: d 2
-	then: n p 2 122880 7935380
+	then: n p 2 122880 9888505
+	Note: the 9888505 is for approximately 5gb
 	then command: w
+	Note: writes the table
 	$ sudo shutdown -r now
 	
+	$ sudo resize2fs /dev/mmcblk0p2
+
 	Create and format new partition: mmcblk0p3
 		This will store user files
 		Mount as /home
+
+6. Upgrade/update kernel
+	sudo apt-get update
+	sudo apt-get upgrade
 
 7. Clone fishcode repo
 	cd
@@ -72,18 +77,18 @@ Advanced options (option 8.)
 	cd fishcode
 	git checkout dev
 
-8. Configure Edimax wifi dongle and replace fstab
+5. Configure Edimax wifi dongle and replace fstab
 	sudo apt-get install wpasupplicant
 	cd ~/ros/src/fishcode/rpi_setup
 	sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
 	sudo cp 8192cu.conf /etc/modprobe.d/
 	sudo cp fstab /etc/fstab
 
-9. Reboot to remount system filesystems read-only
+6. Reboot to remount system filesystems read-only
 	sudo reboot
 	If there are errors, try to fix
 
-10. Install ROS Indigo -- big step
+7. Install ROS Indigo -- big step
 	[from instructions online at http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi]
 
 	# re-mount system partition as writeable for this install
@@ -134,22 +139,8 @@ Advanced options (option 8.)
 	# Build the workspace and install
 	sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
 
-	# Add the following lines to ~/.bashrc
+	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
-	source ~/ros/devel/setup.bash
 
-11. Install rpi camera library
-	cd ~/ros/src/fishcode
-	# Extract raspicam-0.1.3.zip to ~ directory
-	unzip raspicam-0.1.3.zip -d ~
-
-	# Follow setup directions within raspicam-0.1.3 folder to build and install libraspicam (without OpenCV plugin)
-
-12. Install OpenCV
-	sudo apt-get install ros-indigo-opencv3
-
-13. Build fishcode
-	cd ~/ros/src/
-	catkin_init_workspace
-	cd ..
-	catkin_make
+8. XXX Install rpi camera library
+9. XXX Install OpenCV
