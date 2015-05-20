@@ -39,7 +39,8 @@ bool set_target_bgr_cb(fishcode::SetTargetColorBgr::Request &req, fishcode::SetT
 
 int main(int argc, char** argv)
 {
-	cam_poll(argc, argv);
+	//cam_poll(argc, argv);
+	cv_test(argc, argv);
 
 	return 0;
 }
@@ -114,6 +115,7 @@ int cam_poll(int argc, char** argv)
 	if (!cam.isOpened())
 	{
 		printf("Failed to open raspicam.\n");
+		return 1;
 	}
 
 	// initialize ros

@@ -86,4 +86,5 @@ RaspPi SD Card Initialization
 	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
 
-
+8. XXX Install rpi camera library
+9. XXX Install OpenCV

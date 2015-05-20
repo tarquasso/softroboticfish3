@@ -2,7 +2,7 @@
 
 #include "ros/ros.h"
 #include "fishcode/VisOffset.h"
-#include "fishcode/SetTargetColorBgr.h"
+#include "fishcode/SetSwimMode.h"
 
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
@@ -23,15 +23,24 @@ enum st_rx_t { ST_SYNC, ST_LEN, ST_RX };
 class SerialComm
 {
 private:
+
+	ros::NodeHandle _nh;
+
 	void handle_msg(const char* buf, int msg_len);
 
 	io_service* _io;
 	serial_port* _serial;
 
 	boost::mutex _tx_mtx;
+	char msg_buf[MAX_MSG_LENGTH];
 
+	ros::Publisher set_swim_mode_rqst_pub;
 	ros::Subscriber set_swim_mode_sub;
 	ros::Subscriber vis_offset_sub;
+
+	void VisOffset_cb(const fishcode::VisOffset::ConstPtr& vis_msg);
+	void SetSwimMode_cb(const fishcode::SetSwimMode::ConstPtr& mode_msg);
+
 
 public:
 	SerialComm();

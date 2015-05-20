@@ -45,6 +45,7 @@ find_library(raspicam_LIBRARIES raspicam /usr/local/lib/)
 add_message_files(
 	FILES
 	VisOffset.msg
+	SetSwimMode.msg
 )
 
 ## Generate services in the 'srv' folder
