@@ -1,13 +1,64 @@
 RaspPi SD Card Initialization
 
-1. Begin with latest image of Raspian Wheezy
+1. Download latest image of Raspian Wheezy
+Used here: RASPBIAN - Debian Wheezy 
+Release date: 2015-05-05
+Default login:pi / raspberry
+Kernel version:3.18
+https://www.raspberrypi.org/downloads/
+Verify SHA-1:cb799af077930ff7cbcfaa251b4c6e25b11483de
+$ openssl sha1 2015-05-05-raspbian-wheezy.zip
 
-2. Upgrade/update kernel
+2. Write the downloaded image to a card according to this guideline:
+https://www.raspberrypi.org/documentation/installation/installing-images/README.md
+	cd into the folder with the image
+$ diskutil list
+/dev/disk0
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:      GUID_partition_scheme                        *1.0 TB     disk0
+   1:                        EFI EFI                     209.7 MB   disk0s1
+   2:                  Apple_HFS Macintosh HD            698.0 GB   disk0s2
+   3:                 Apple_Boot Recovery HD             650.0 MB   disk0s3
+   4:       Microsoft Basic Data BOOTCAMP                301.7 GB   disk0s4
+/dev/disk1
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:     FDisk_partition_scheme                        *31.4 GB    disk1
+   1:             Windows_FAT_32 NO NAME                 31.4 GB    disk1s1
+
+Identify the disk (not partition) of your SD card e.g. disk1 
+
+$ diskutil unmountDisk /dev/disk1
+Unmount of all volumes on disk1 was successful
+
+$ sudo dd bs=1m if=2015-05-05-raspbian-wheezy.img of=/dev/disk1
+(This takes several minutes.)
+3125+0 records in
+3125+0 records out
+3276800000 bytes transferred in 950.170971 secs (3448643 bytes/sec)
+
+3. Hook RPi to power and ethernet(access to internet).
+Connect To RPi with a screen via hdmi and boot rpi up.
+
+4. in ‘raspi-config’ shown on attached screen: 
+Enable Camera (option 5.)
+Advanced options (option 8.)
+	A4 SSH (enable)
+	A0 Update tool to the latest version
+<Finish> raspi-config 
+
+5. Upgrade/update kernel
 	sudo apt-get update
 	sudo apt-get upgrade
 
-3. Set up partition table
-	Expand mmcblk0p2 to reasonable size for system files
+4. Set up partition table
+	Expand mmcblk0p2 to reasonable size (4 GB) for system files:
+	$ sudo fdisk /dev/mmcblk0
+	command: p
+	then command: d 2
+	then: n p 2 122880 7935380
+	then command: w
+	$ sudo shutdown -r now
+	
 	Create and format new partition: mmcblk0p3
 		This will store user files
 		Mount as /home
