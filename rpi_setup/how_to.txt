@@ -1,0 +1,89 @@
+RaspPi SD Card Initialization
+
+1. Begin with latest image of Raspian Wheezy
+
+2. Upgrade/update kernel
+	sudo apt-get update
+	sudo apt-get upgrade
+
+3. Set up partition table
+	Expand mmcblk0p2 to reasonable size for system files
+	Create and format new partition: mmcblk0p3
+		This will store user files
+		Mount as /home
+
+4. Clone fishcode repo
+	cd
+	mkdir ros
+	mkdir ros/src
+	cd ros/src
+	git clone https://rkk@login.csail.mit.edu:/afs/csail.mit.edu/group/drl/softrobotics/fishcode.git
+	cd fishcode
+	git checkout dev
+
+5. Configure Edimax wifi dongle and replace fstab
+	sudo apt-get install wpasupplicant
+	cd ~/ros/src/fishcode/rpi_setup
+	sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
+	sudo cp 8192cu.conf /etc/modprobe.d/
+	sudo cp fstab /etc/fstab
+
+6. Reboot to remount system filesystems read-only
+	sudo reboot
+	If there are errors, try to fix
+
+7. Install ROS Indigo -- big step
+	[from instructions online at http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi]
+
+	# re-mount system partition as writeable for this install
+	sudo mount /dev/mmcblk0p2 -o=remount,rw
+
+	# setup ROS Repos
+	sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu wheezy main" > /etc/apt/sources.list.d/ros-latest.list'
+	wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
+	sudo apt-get update
+
+	# install bootstrap dependencies
+	sudo apt-get install python-setuptools python-pip python-yaml python-argparse python-distribute python-docutils python-dateutil python-setuptools python-six
+	sudo pip install rosdep rosinstall_generator wstool rosinstall
+
+	# initialize rosdep
+	sudo rosdep init
+	rosdep update
+
+	# create catkin workspace
+	mkdir ~/ros_catkin_ws
+	cd ~/ros_catkin_ws
+
+	# dl Ros source
+	rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo-ros_comm-wet.rosinstall
+	wstool init src indigo-ros_comm-wet.rosinstall
+
+	# Resolve dependencies
+	mkdir ~/ros_catkin_ws/external_src
+	sudo apt-get install checkinstall cmake
+	sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
+	sudo apt-get update
+
+	# Install libconsole-bridge-dev
+	cd ~/ros_catkin_ws/external_src
+	sudo apt-get build-dep console-bridge
+	apt-get source -b console-bridge
+	sudo dpkg -i libconsole-bridge0.2_*.deb libconsole-bridge-dev_*.deb
+
+	# Install liblz4-dev
+	cd ~/ros_catkin_ws/external_src
+	apt-get source -b lz4
+	sudo dpkg -i liblz4-*.deb
+
+	# Resolve remaining dependencies with rosdep
+	cd ~/ros_catkin_ws
+	rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+
+	# Build the workspace and install
+	sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
+
+	# Add the following line to ~/.bashrc
+	source /opt/ros/indigo/setup.bash
+
+
