@@ -112,6 +112,15 @@ int cam_poll(int argc, char** argv)
 	// initialize raspicam
 	raspicam::RaspiCam_Cv cam;
 
+	// configure camera
+	cam.set(CV_CAP_PROP_FORMAT, CV_8UC3);
+	cam.set(CV_CAP_PROP_FRAME_WIDTH, 1280);	// capture at full resolution
+	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 980);
+	cam.set(CV_CAP_PROP_BRIGHTNESS, 50);
+	cam.set(CV_CAP_PROP_CONTRAST, 50);
+	cam.set(CV_CAP_PROP_SATURATION, 50);
+	cam.set(CV_CAP_PROP_GAIN, 50);
+
 	printf("Opening raspicam.\n");
 	cam.open();	// open and start capturing
 	if (!cam.isOpened())
@@ -125,15 +134,6 @@ int cam_poll(int argc, char** argv)
 	ros::NodeHandle nh;
 	ros::Publisher pub = nh.advertise<fishcode::VisOffset>("vis_offset", 5);
 	ros::ServiceServer set_bgr_srv = nh.advertiseService("set_target_bgr", set_target_bgr_cb);
-
-	// configure camera
-	cam.set(CV_CAP_PROP_FORMAT, CV_8UC3);
-	cam.set(CV_CAP_PROP_FRAME_WIDTH, 1280);	// capture at full resolution
-	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 980);
-	cam.set(CV_CAP_PROP_BRIGHTNESS, 50);
-	cam.set(CV_CAP_PROP_CONTRAST, 50);
-	cam.set(CV_CAP_PROP_SATURATION, 50);
-	cam.set(CV_CAP_PROP_GAIN, 50);
 
 	int mat_shape[2] = {RES_W, RES_H};
 
