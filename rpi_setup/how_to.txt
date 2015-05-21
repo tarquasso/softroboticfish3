@@ -115,65 +115,75 @@ Advanced options (option 8.)
 	$ sudo apt-get install vim
 
 10. Configure Edimax wifi dongle and replace fstab
-	$ sudo apt-get install wpasupplicant (probably not necessary)
+	# Get wpasupplicant(probably not necessary)
+	$ sudo apt-get install wpasupplicant 
 	$ cd ~/ros/src/fishcode/rpi_setup
-	Make a backup of the wifi settings:
+	
+	# Make a backup of the wifi settings:
 	$ sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.bk
-	add the wifi of the access point
+	
+	# add the wifi of the access point
 	$ sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
-	copy settings for wifi:
+	
+	# copy settings for wifi:
 	$ sudo cp 8192cu.conf /etc/modprobe.d/
-	make a backup of fstab
+	
+	# make a backup of fstab
 	$ sudo cp /etc/fstab /etc/fstab.bk
-	copy the fstab		
+	
+	# copy the fstab		
 	$ sudo cp fstab /etc/fstab
 
 11. Reboot to remount system filesystems read-only
 	$ sudo reboot
-	If there are errors, try to fix	- TODO: what could happen here?
+	# If there are errors, try to fix	- TODO: what could happen here?
 
 12. Install ROS Indigo -- big step
 	[from instructions online at http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi]
 
 	# re-mount system partition as writeable for this install
-	sudo mount /dev/mmcblk0p2 -o=remount,rw 	<—- THIS STEP DOES NOT WORK!!!!
-	
+	$ sudo mount /dev/mmcblk0p2 -o remount,rw
+
 	# setup ROS Repos
-	sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu wheezy main" > /etc/apt/sources.list.d/ros-latest.list'
-	wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
-	sudo apt-get update
+	$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu wheezy main" > /etc/apt/sources.list.d/ros-latest.list'
+	$ wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
 
 	# install bootstrap dependencies
-	sudo apt-get install python-setuptools python-pip python-yaml python-argparse python-distribute python-docutils python-dateutil python-setuptools python-six
-	sudo pip install rosdep rosinstall_generator wstool rosinstall
+	$ sudo apt-get install python-setuptools python-pip python-yaml python-argparse python-distribute python-docutils python-dateutil python-setuptools python-six
+	$ sudo pip install rosdep rosinstall_generator wstool rosinstall
 
 	# initialize rosdep
-	sudo rosdep init
-	rosdep update
-
+	$ sudo rosdep init
+	$ rosdep update
+	
+	# Now actual installation of ROS Indigo begins
 	# create catkin workspace
-	mkdir ~/ros_catkin_ws
-	cd ~/ros_catkin_ws
+	$ mkdir ~/ros_catkin_ws
+	$ cd ~/ros_catkin_ws
 
-	# dl Ros source
-	rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo-ros_comm-wet.rosinstall
-	wstool init src indigo-ros_comm-wet.rosinstall
+	# download Ros source (this step will take a while) (ROS-Comm: (recommended) ROS package, build, and communication libraries. No GUI tools.)
+	$ rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo-ros_comm-wet.rosinstall
+	$ wstool init src indigo-ros_comm-wet.rosinstall
+	
+	# only ros-comm and desktop variants tested on raspberry pi…
 
-	# Resolve dependencies
-	mkdir ~/ros_catkin_ws/external_src
-	sudo apt-get install checkinstall cmake
-	sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
-	sudo apt-get update
+	# Resolve dependencies (Before you can build your catkin workspace you need to make sure that you have all the required dependencies.)
+	$ mkdir ~/ros_catkin_ws/external_src
+	$ sudo apt-get install checkinstall cmake
+	$ sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
+	$ sudo apt-get update
 
 	# Install libconsole-bridge-dev
-	cd ~/ros_catkin_ws/external_src
-	sudo apt-get build-dep console-bridge
-	apt-get source -b console-bridge
-	sudo dpkg -i libconsole-bridge0.2_*.deb libconsole-bridge-dev_*.deb
+	$ cd ~/ros_catkin_ws/external_src
+	$ sudo apt-get build-dep console-bridge
+	$ apt-get source -b console-bridge
+	$ sudo dpkg -i libconsole-bridge0.2_*.deb libconsole-bridge-dev_*.deb
 
 	# Install liblz4-dev
-	cd ~/ros_catkin_ws/external_src
-	apt-get source -b lz4
+	$ cd ~/ros_catkin_ws/external_src
+	$ apt-get source -b lz4
 	sudo dpkg -i liblz4-*.deb
 
 	# Resolve remaining dependencies with rosdep
@@ -187,4 +197,8 @@ Advanced options (option 8.)
 	source /opt/ros/indigo/setup.bash
 
 8. XXX Install rpi camera library
+
 9. XXX Install OpenCV
+
+
+$ sudo mount /dev/mmcblk0p2 -o remount,ro
