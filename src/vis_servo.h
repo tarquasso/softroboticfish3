@@ -310,15 +310,15 @@ float calc_fill_share(const Mat& labels, int k)
 	return ((float) c) / t;
 }
 
-void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels, int nearest_k)
+void reconstruct(const Size& s, const Mat& centroids, const Mat& colors, const Mat& labels, int nearest_k, Mat& out)
 {
-	Mat r_img(s.height, s.width, CV_8UC3);
+	out = Mat(s.height, s.width, CV_8UC3);
 	MatIterator_<Vec3b> dit, dend;
 	MatIterator_<uchar> lit = labels.begin<uchar>();
 	int i,j;
 	i = j = 0;
 
-	for (dit=r_img.begin<Vec3b>(), dend=r_img.end<Vec3b>(); dit != dend; ++dit, ++lit)
+	for (dit=out.begin<Vec3b>(), dend=out.end<Vec3b>(); dit != dend; ++dit, ++lit)
 	{
 		// Color pixel according to label
 		*dit = colors.at<Vec3b>(*lit);
@@ -346,13 +346,9 @@ void reconstruct(Size s, Mat& centroids, Mat& colors, Mat& labels, int nearest_k
 		{
 			white = Scalar(0,255,0);
 		}
-		circle(r_img, center, radius*1.5, white, thickness, linetype);
-		circle(r_img, center, radius, color, thickness, linetype);
+		circle(out, center, radius*1.5, white, thickness, linetype);
+		circle(out, center, radius, color, thickness, linetype);
 	}
-
-	namedWindow("reduced image", WINDOW_AUTOSIZE);
-	imshow("reduced image", r_img);
-	waitKey();
 
 	return;
 }

@@ -90,7 +90,8 @@ int cv_test(int argc, char** argv)
 
 	std::cout << centroids << std::endl;
 
-	reconstruct(img.size(), centroids, colors, labels, nearest_centroid);
+	Mat out;
+	reconstruct(img.size(), centroids, colors, labels, nearest_centroid, out);
 	
 	cleanup();
 	return 0;
@@ -183,8 +184,16 @@ int cam_poll(int argc, char** argv)
 		vmsg.fill_share = fill_share;
 
 		pub.publish(vmsg);
-
 		ROS_INFO("Vis offset to target is (%f, %f), fill share is %f", vmsg.xoff, vmsg.yoff, vmsg.fill_share);
+
+		// reconstruct image
+//		Mat out;
+//		reconstruct(frame.size(), centroids, colors, labels, nearest_centroid, out);
+//		std::sprintf(filename, "frame%d_reduced.jpg", frame_id);
+//		imwrite((img_path + filename).c_str(), frame);
+//		printf("Reduced frame saved in %s.\n",(img_path+filename).c_str());
+
+
 		printf("\n");
 		frame_id++;
 	}
