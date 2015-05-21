@@ -189,17 +189,16 @@ Advanced options (option 8.)
 
 	# Resolve remaining dependencies with rosdep
 	$ cd ~/ros_catkin_ws
-	 rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
-	ERROR: the following rosdeps failed to install
-  	apt: command [sudo -H apt-get install -y python-rospkg] failed
-  	apt: command [sudo -H apt-get install -y python-catkin-pkg] failed
-  	apt: command [sudo -H apt-get install -y python-rosdep] failed
+	$ rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+	There will be an ERROR that the following rosdeps failed to install
   	apt: Failed to detect successful installation of [python-rospkg]
   	apt: Failed to detect successful installation of [python-catkin-pkg]
   	apt: Failed to detect successful installation of [python-rosdep]
+	NOTE from web on this: python:any was very recently added and the version of apt on wheezy doesn't handle it ( https://bugs.launchpad.net/ubuntu/+so... ). It can be ignored because those packages are installed on pip.
 
 	# Build the workspace and install
-	sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
+	$ sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
+	# should show: <== Finished processing package [48 of 48]: 'rosbag'
 
 	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
