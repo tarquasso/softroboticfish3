@@ -101,6 +101,8 @@ add_executable(vis_servo src/vis_servo.cpp)
 
 add_executable(usb_comm src/usb_comm.cpp)
 
+add_executable(commander src/commander.cpp)
+
 target_link_libraries(vis_servo
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
@@ -112,8 +114,13 @@ target_link_libraries(usb_comm
 			${catkin_LIBRARIES}
 			)
 
+target_link_libraries(commander
+			${catkin_LIBRARIES}
+			)
+
 add_dependencies(vis_servo fishcode_generate_messages_cpp)
 add_dependencies(usb_comm fishcode_generate_messages_cpp)
+add_dependencies(commander fishcode_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 	
