@@ -170,6 +170,7 @@ Advanced options (option 8.)
 	# only ros-comm and desktop variants tested on raspberry pi…
 
 	# Resolve dependencies (Before you can build your catkin workspace you need to make sure that you have all the required dependencies.)
+	# (Needed for Ros_Comm: libconsole-bridge-dev and liblz4-dev)
 	$ mkdir ~/ros_catkin_ws/external_src
 	$ sudo apt-get install checkinstall cmake
 	$ sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
@@ -184,11 +185,18 @@ Advanced options (option 8.)
 	# Install liblz4-dev
 	$ cd ~/ros_catkin_ws/external_src
 	$ apt-get source -b lz4
-	sudo dpkg -i liblz4-*.deb
+	$ sudo dpkg -i liblz4-*.deb
 
 	# Resolve remaining dependencies with rosdep
-	cd ~/ros_catkin_ws
-	rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+	$ cd ~/ros_catkin_ws
+	 rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+	ERROR: the following rosdeps failed to install
+  	apt: command [sudo -H apt-get install -y python-rospkg] failed
+  	apt: command [sudo -H apt-get install -y python-catkin-pkg] failed
+  	apt: command [sudo -H apt-get install -y python-rosdep] failed
+  	apt: Failed to detect successful installation of [python-rospkg]
+  	apt: Failed to detect successful installation of [python-catkin-pkg]
+  	apt: Failed to detect successful installation of [python-rosdep]
 
 	# Build the workspace and install
 	sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
