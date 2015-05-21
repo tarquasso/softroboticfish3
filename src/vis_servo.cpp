@@ -107,7 +107,7 @@ int cam_poll(int argc, char** argv)
 	std::string img_path = pkg_path(1) + "/images/";
 
 	// parse cmd line
-	for (int i=0; i<argc; i++)
+	for (int i=1; i<argc; i++)
 	{
 		// Parse string
 		if (strncmp(argv[i], "K=", 2) == 0)
