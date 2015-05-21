@@ -48,34 +48,68 @@ Advanced options (option 8.)
 <Finish> raspi-config 
 
 5. Set up partition table
-	Expand mmcblk0p2 to reasonable size (5 GB) for system files:
+	Expand mmcblk0p2 to reasonable size (6 GB) for system files:
 	$ sudo fdisk /dev/mmcblk0
 	command: p
 	then command: d 2
-	then: n p 2 122880 9888505
-	Note: the 9888505 is for approximately 5gb
+	then command: n p 2 122880 11841630
+	Note: the 11841630 is for approximately 6gb
 	then command: w
 	Note: writes the table
 	$ sudo shutdown -r now
 	
 	$ sudo resize2fs /dev/mmcblk0p2
+	$ df -h
+	this should show 47% use
 
-	Create and format new partition: mmcblk0p3
-		This will store user files
-		Mount as /home
+	Create and format new partition: mmcblk0p3 
+	(This will store user files):	
+	$ sudo fdisk /dev/mmcblk0
+	command: n p 3 11841631 61407231
+	command: w
+	$ sudo shutdown -r now
+	$ sudo mkfs.ext4 /dev/mmcblk0p3
+	Mount your new partition:
+	$ sudo mount /dev/mmcblk0p3 /media/tmp
+	$ cd /home
+	$ sudo cp -rp ./ /media/tmp
+	$ sudo umount /media/tmp
+	$ sudo rm -rf /media/tmp 
+	#(get rid of the tmp folder)
+	$ sudo mv /home /old_home
+	$ sudo mkdir /home
+	the add the following line to /etc/fstab/:
+	/dev/mmcblk0p3 /home ext4 defaults,noatime,nodiratime 0 0
+	$ sudo mount /home
+	After you have confirmed everything is working and copied over and you don't need 	your old home directory, you can delete it.
+	$ sudo rm -fr /old_home
 
-6. Upgrade/update kernel
-	sudo apt-get update
-	sudo apt-get upgrade
+6. Change keyboard Layout
+	$ sudo vi /etc/default/keyboard
+	It should look like this:
+	# KEYBOARD CONFIGURATION FILE
+	# Consult the keyboard(5) manual page.
+	XKBMODEL="pc105"
+	XKBLAYOUT="us"
+	XKBVARIANT=""
+	XKBOPTIONS=""
 
-7. Clone fishcode repo
-	cd
-	mkdir ros
-	mkdir ros/src
-	cd ros/src
-	git clone https://rkk@login.csail.mit.edu:/afs/csail.mit.edu/group/drl/softrobotics/fishcode.git
-	cd fishcode
-	git checkout dev
+	BACKSPACE="guess"
+	
+	then save	
+
+7. Upgrade/update kernel
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
+
+8. Clone fishcode repo
+	$ cd ~
+	$ mkdir ros
+	$ mkdir ros/src
+	$ cd ros/src
+	$ git clone rkk@login.csail.mit.edu:/afs/csail.mit.edu/group/drl/softrobotics/fishcode.git
+	$ cd fishcode
+	$ git checkout dev
 
 5. Configure Edimax wifi dongle and replace fstab
 	sudo apt-get install wpasupplicant
