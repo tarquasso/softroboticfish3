@@ -1,0 +1,11 @@
+# Run:
+$ roscore
+
+# on a separate ssh session:  
+$ cd ~/ros
+$ catkin_make
+run again
+$ catkin_make
+# perform rosrun with the package name and the application name
+$ rosrun fishcode vis_servo
+

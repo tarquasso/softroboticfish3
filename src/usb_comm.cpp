@@ -24,18 +24,18 @@ SerialComm::SerialComm(ros::NodeHandle& nh)
 {
 	_nh = nh;
 
-	std::string port_name = "/dev/ttyUSB0";
-	printf("Opening serial port at %s.\n", port_name.c_str());
+	std::string port_name = "/dev/ttyAMA0";
+	ROS_INFO("Opening serial port at %s.", port_name.c_str());
 	_io = new io_service();
 	_serial = new serial_port(*_io);
 	_serial->open(port_name);
 	if (_serial->is_open())
 	{
-		printf("Success.\n");
+		ROS_INFO("Success.");
 	}
 	else
 	{
-		printf("Failed to open port at %s.\n", port_name.c_str());
+		ROS_ERROR("Failed to open port at %s.", port_name.c_str());
 	}
 
 	// configure port
@@ -127,7 +127,7 @@ void SerialComm::spin()
 
             default:
                 // should never get here
-            	printf("ERROR: Invalid SerialComm receive state.\n");
+            	ROS_ERROR("Invalid SerialComm receive state.");
                 state = ST_SYNC;
                 break;
         }
@@ -141,6 +141,7 @@ void SerialComm::handle_msg(const char* buf, int msg_len)
     int msg_id = buf[0];    // first byte
     if (msg_id == MSG_ID_SET_SWIM_MODE_BTTN_RQST)
     {
+    	ROS_INFO("Received SetSwimModeBttnRqst msg.");
 		// Publish it in ROS
 		fishcode::SetSwimMode mode_rqst;
 		mode_rqst.mode = buf[1];
@@ -151,7 +152,7 @@ void SerialComm::handle_msg(const char* buf, int msg_len)
     else
     {
     	// currently no supported message types
-        printf("WARN: SerialComm recieved unrecognized message of type %d.\n", msg_id);
+        ROS_WARN("SerialComm recieved unrecognized message of type %d.", msg_id);
     }
 }
 

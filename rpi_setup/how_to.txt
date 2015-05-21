@@ -43,6 +43,7 @@ Connect To RPi with a screen via hdmi and boot rpi up.
 Change Password (option 1) to ‘opadula1’ 
 Enable Camera (option 5.)
 Advanced options (option 8.)
+	A8 Serial (disable) # so ttyAMA0 is free for mBed comm
 	A4 SSH (enable)
 	A0 Update tool to the latest version
 <Finish> raspi-config 
@@ -212,6 +213,7 @@ Advanced options (option 8.)
 
 	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
+	source ~/ros/devel/setup.bash
 	
 	# lock the rpi again
 	$ sudo mount /dev/mmcblk0p2 -o remount,ro
@@ -263,5 +265,7 @@ http://sourceforge.net/projects/raspicam/files/?
 	#test it: this should work and save 3 files
 	$ raspicam_test
 
-	
-
+17. Other useful stuff
+	# serial terminal
+	sudo apt-get install ckermit
+	cp rpi_setup/.kermrc ~
