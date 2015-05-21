@@ -1,0 +1,16 @@
+TODOs:
+
+http://k3a.me/how-to-make-raspberrypi-truly-read-only-reliable-and-trouble-free/
+
+# Disable filesystem check and swap
+$ sudo mount /dev/mmcblk0p2 -o remount,rw
+$ vim /boot/cmdline.txt 
+#and append the following two at the end of the line:
+fastboot noswap
+$ sudo mount /dev/mmcblk0p2 -o remount,ro
+$ sudo reboot
+
+
+continue here:
+# 4.2 Remove unnecessary services and files
+#apt-get remove --purge wolfram-engine triggerhappy cron anacron logrotate dbus
