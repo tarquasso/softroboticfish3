@@ -212,6 +212,7 @@ Advanced options (option 8.)
 
 	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
+	source ~/ros/devel/setup.bash
 	
 	# lock the rpi again
 	$ sudo mount /dev/mmcblk0p2 -o remount,ro
