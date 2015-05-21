@@ -5,7 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <raspicam/raspicam.h>
+#include <raspicam/raspicam_cv.h>
 
 #include <string>
 #include <cstring>
@@ -109,9 +109,9 @@ int cam_poll(int argc, char** argv)
 	initialize(K, target_bgr);
 
 	// initialize raspicam
-	raspicam::RaspiCam cam;
+	raspicam::RaspiCam_Cv cam;
 	printf("Opening raspicam.\n");
-	cam.open(false);	// don't start capturing yet
+	cam.open();	// open but don't start capturing yet
 	if (!cam.isOpened())
 	{
 		printf("Failed to open raspicam.\n");
@@ -125,12 +125,9 @@ int cam_poll(int argc, char** argv)
 	ros::ServiceServer set_bgr_srv = nh.advertiseService("set_target_bgr", set_target_bgr_cb);
 
 	// configure camera
-	cam.setWidth(RES_W);
-	cam.setHeight(RES_H);
-	cam.setVideoStabilization(true);
-	cam.setHorizontalFlip(false);
-	cam.setVerticalFlip(false);
-	cam.setFormat(raspicam::RASPICAM_FORMAT_BGR);
+	cam.set(CV_CAP_PROP_FRAME_WIDTH, RES_W);
+	cam.set(CV_CAP_PROP_FRAME_HEIGHT, RES_H);
+	cam.set(CV_CAP_PROP_EXPOSURE, -1); // auto exposure
 
 	printf("Starting capture.\n");
 	cam.startCapture();
@@ -141,6 +138,8 @@ int cam_poll(int argc, char** argv)
 	char* filename = new char[10];
 	float fill_share;
 	
+	Mat frame;
+
 	while (ros::ok())
 	{
 		// grab image
@@ -148,7 +147,7 @@ int cam_poll(int argc, char** argv)
 		ros::Time now = ros::Time::now();
 
 		// import into Mat object
-		Mat frame(2, mat_shape, CV_8UC3, (void*) cam.getImageBufferData(), 0);
+		cam.retrieve(frame);
 
 		// save image to file for testing purposes
 		std::sprintf(filename, "frame%d.jpg", frame_id);
