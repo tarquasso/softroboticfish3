@@ -24,9 +24,9 @@ long long * num_pixels;
 #define KMEANS_ATTEMPTS 3
 TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 20, 1.0);
 
-#define FT_0_WT 0.79f
-#define FT_1_WT 0.18f
-#define FT_2_WT 0.03f
+#define FT_0_WT 20.0f
+#define FT_1_WT 5.0f
+#define FT_2_WT 1.0f
 
 // target color in feature space
 Vec3f target_ftr;

@@ -99,11 +99,11 @@ int cv_test(int argc, char** argv)
 int cam_poll(int argc, char** argv)
 {
 	// default arguments
-	int K = 3;
+	int K = 4;
 	Vec3b target_bgr;
-	target_bgr[0] = 89;	// blue
-	target_bgr[1] = 67;	// green
-	target_bgr[2] = 151; // red
+	target_bgr[0] = 77;	 	// blue
+	target_bgr[1] = 100;	// green
+	target_bgr[2] = 180; 	// red
 	std::string img_path = pkg_path(1) + "/images/";
 
 	// parse cmd line
@@ -160,13 +160,15 @@ int cam_poll(int argc, char** argv)
 
 	while (ros::ok())
 	{
+		ros::spinOnce();
+
 		// grab image
 		cam.grab();
 		ros::Time now = ros::Time::now();
 
 		// import into Mat object
 		cam.retrieve(frame_raw);
-		ROS_INFO("Frame captured.");
+		ROS_INFO("Frame %d captured.", frame_id);
 //		print_dim("Frame_Raw", frame_raw);
 		resize(frame_raw, frame, Size(RES_W, RES_H));
 //		print_dim("Frame Reduced", frame);
@@ -204,7 +206,7 @@ int cam_poll(int argc, char** argv)
 //		Mat out;
 //		reconstruct(frame.size(), centroids, colors, labels, nearest_centroid, out);
 //		std::sprintf(filename, "frame%d_reduced.jpg", frame_id);
-//		imwrite((img_path + filename).c_str(), frame);
+//		imwrite((img_path + filename).c_str(), out);
 //		printf("Reduced frame saved in %s.\n",(img_path+filename).c_str());
 
 
