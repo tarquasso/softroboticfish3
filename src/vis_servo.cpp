@@ -20,8 +20,8 @@
 #include "fishcode/VisOffset.h"
 #include "fishcode/SetTargetColorBgr.h"
 
-#define RES_W 1280
-#define RES_H 960
+#define RES_W 320
+#define RES_H 240
 
 using namespace cv;
 
@@ -127,8 +127,8 @@ int cam_poll(int argc, char** argv)
 
 	// configure camera
 	cam.set(CV_CAP_PROP_FORMAT, CV_8UC3);
-	cam.set(CV_CAP_PROP_FRAME_WIDTH, RES_W);
-	cam.set(CV_CAP_PROP_FRAME_HEIGHT, RES_H);
+	cam.set(CV_CAP_PROP_FRAME_WIDTH, 1280);	// capture at full resolution
+	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 640);
 	cam.set(CV_CAP_PROP_BRIGHTNESS, 50);
 	cam.set(CV_CAP_PROP_CONTRAST, 50);
 	cam.set(CV_CAP_PROP_SATURATION, 50);
@@ -140,6 +140,7 @@ int cam_poll(int argc, char** argv)
 	char* filename = new char[10];
 	float fill_share;
 	
+	Mat frame_raw;
 	Mat frame;
 
 	while (ros::ok())
@@ -149,8 +150,10 @@ int cam_poll(int argc, char** argv)
 		ros::Time now = ros::Time::now();
 
 		// import into Mat object
-		cam.retrieve(frame);
-		print_dim("Frame", frame);
+		cam.retrieve(frame_raw);
+		print_dim("Frame_Raw", frame_raw);
+		resize(frame_raw, frame, Size(RES_W, RES_H));
+		print_dim("Frame Reduced", frame);
 
 		// save image to file for testing purposes
 		std::sprintf(filename, "frame%d.jpg", frame_id);

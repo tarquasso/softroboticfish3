@@ -21,8 +21,8 @@ long long * num_pixels;
 
 // Parameters for kmeans
 #define KMEANS_FLAGS KMEANS_RANDOM_CENTERS
-#define KMEANS_ATTEMPTS 10
-TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 0.01);
+#define KMEANS_ATTEMPTS 3
+TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 1.0);
 
 #define FT_0_WT 10.0f
 #define FT_1_WT 3.0f
