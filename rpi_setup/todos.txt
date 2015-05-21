@@ -1,16 +1,10 @@
 TODOs:
 
 http://k3a.me/how-to-make-raspberrypi-truly-read-only-reliable-and-trouble-free/
-
-# Disable filesystem check and swap
-$ sudo mount /dev/mmcblk0p2 -o remount,rw
-$ vim /boot/cmdline.txt 
-#and append the following two at the end of the line:
-fastboot noswap
-$ sudo mount /dev/mmcblk0p2 -o remount,ro
-$ sudo reboot
+Kris's comment:
+That looks pretty thorough. There are a few things in there that seem pretty easy/worthwhile, like setting up the watchdog and removing those unnecessary services. Also that clock syncing would be handy.
 
 
-continue here:
+CONTINUE here:
 # 4.2 Remove unnecessary services and files
 #apt-get remove --purge wolfram-engine triggerhappy cron anacron logrotate dbus

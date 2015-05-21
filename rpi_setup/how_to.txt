@@ -98,9 +98,10 @@ Advanced options (option 8.)
 	
 	then save	
 
-7. Upgrade/update kernel
+7. Update/Upgrade Packages and Update Firmware
 	$ sudo apt-get update
 	$ sudo apt-get upgrade
+	$ sudo rpi-update
 
 8. Clone fishcode repo
 	$ cd ~
@@ -138,7 +139,16 @@ Advanced options (option 8.)
 	$ sudo reboot
 	# If there are errors, try to fix	- TODO: what could happen here?
 
-12. Install ROS Indigo -- big step
+12. Disable filesystem check and swap
+	$ sudo mount /dev/mmcblk0p2 -o remount,rw
+	$ vim /boot/cmdline.txt 
+	#and append the following two at the end of the line:
+	fastboot noswap
+	$ sudo mount /dev/mmcblk0p2 -o remount,ro
+	$ sudo reboot
+
+
+13. Install ROS Indigo -- big step
 	[from instructions online at http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi]
 
 	# re-mount system partition as writeable for this install
@@ -202,14 +212,56 @@ Advanced options (option 8.)
 
 	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
+	
+	# lock the rpi again
+	$ sudo mount /dev/mmcblk0p2 -o remount,ro
 
-8. Install OpenCV
-	sudo apt-get install ros-indigo-opencv3
+14. #Make Mount Point for mbed
+	$ sudo mount /dev/mmcblk0p2 -o remount,rw
+	$ sudo mkdir /media/mbed
+	$ sudo mount /dev/mmcblk0p2 -o remount,ro
+	$ sudo reboot
+	#it should now mount the mbed, if it is connected
 
-9. Install rpi camera library
-	unzip ~/ros/src/fishcode/rpi_setup/raspicam-0.1.3.zip -d ~
-	cd ~/raspicam-0.1.3
+15. Install OpenCV
+	$ sudo mount /dev/mmcblk0p2 -o remount,rw
+	# Install the required developer tools and packages:
+	$ sudo apt-get install build-essential cmake pkg-config
+	
+	# Install the necessary image I/O packages. These packages allow you to load various image file formats such as JPEG, PNG, TIFF, etc.
+	$ sudo apt-get install libjpeg8-dev libtiff4-dev libjasper-dev libpng12-dev
+	
+	# Install the GTK development library. This library is used to build Graphical User Interfaces (GUIs) and is required for the highgui  library of OpenCV which allows you to view images on your screen:
+	$ sudo apt-get install libgtk2.0-dev
+	
+	# Install the necessary video I/O packages. These packages are used to load video files using OpenCV:
+	$ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+
+	#Install OpenCV (the steps before might be unnecessary)
+	$ sudo apt-get install libopencv-dev
+
+16. Install rpi camera library
+http://www.uco.es/investiga/grupos/ava/node/40
+http://sourceforge.net/projects/raspicam/files/?
+	$ unzip ~/ros/src/fishcode/rpi_setup/raspicam-0.1.3.zip -d ~
+	$ cd ~/raspicam-0.1.3
 	# follow directions in README file to make and install
+	$ mkdir build
+	$ cd build
+	$ cmake ..
+	# If OpenCV development files are installed in your system, then  you see
+	— CREATE OPENCV MODULE=1
+	# otherwise this option will be 0 and the opencv module of the library will not be compiled.
 
+	# Finally compile and install
+	$ make
+	$ sudo make install
+	
+	# Update library cache
+	$ sudo ldconfig -v
+	
+	#test it: this should work and save 3 files
+	$ raspicam_test
 
-$ sudo mount /dev/mmcblk0p2 -o remount,ro
+	
+
