@@ -128,7 +128,7 @@ int cam_poll(int argc, char** argv)
 	// configure camera
 	cam.set(CV_CAP_PROP_FORMAT, CV_8UC3);
 	cam.set(CV_CAP_PROP_FRAME_WIDTH, 1280);	// capture at full resolution
-	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 640);
+	cam.set(CV_CAP_PROP_FRAME_HEIGHT, 980);
 	cam.set(CV_CAP_PROP_BRIGHTNESS, 50);
 	cam.set(CV_CAP_PROP_CONTRAST, 50);
 	cam.set(CV_CAP_PROP_SATURATION, 50);
@@ -151,16 +151,18 @@ int cam_poll(int argc, char** argv)
 
 		// import into Mat object
 		cam.retrieve(frame_raw);
-		print_dim("Frame_Raw", frame_raw);
+		ROS_INFO("Frame captured.");
+//		print_dim("Frame_Raw", frame_raw);
 		resize(frame_raw, frame, Size(RES_W, RES_H));
-		print_dim("Frame Reduced", frame);
+//		print_dim("Frame Reduced", frame);
 
 		// save image to file for testing purposes
-		std::sprintf(filename, "frame%d.jpg", frame_id);
-		imwrite((img_path + filename).c_str(), frame);
-		printf("Frame captured and saved in %s.\n",(img_path+filename).c_str());
+//		std::sprintf(filename, "frame%d.jpg", frame_id);
+//		imwrite((img_path + filename).c_str(), frame);
+//		printf("Frame captured and saved in %s.\n",(img_path+filename).c_str());
 
 		// calculate centroids
+		ROS_INFO("Calculating centroids.");
 		Mat centroids(3, K, CV_16U);
 		Mat colors(1, K, CV_8UC3);
 		Mat labels(frame.total(), 1, CV_8U);
@@ -173,8 +175,8 @@ int cam_poll(int argc, char** argv)
 		// now publish
 		fishcode::VisOffset vmsg;
 		vmsg.timestamp = now;
-		vmsg.xoff = xoff;
-		vmsg.yoff = yoff;
+		vmsg.xoff = yoff;	// account for camera mounting orientation here
+		vmsg.yoff = xoff;
 		vmsg.b = target_bgr[0];
 		vmsg.g = target_bgr[1];
 		vmsg.r = target_bgr[2];
@@ -182,6 +184,7 @@ int cam_poll(int argc, char** argv)
 
 		pub.publish(vmsg);
 
+		ROS_INFO("Vis offset to target is (%f, %f), fill share is %f", vmsg.xoff, vmsg.yoff, vmsg.fill_share);
 		printf("\n");
 		frame_id++;
 	}

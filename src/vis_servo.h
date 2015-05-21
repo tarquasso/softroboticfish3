@@ -22,7 +22,7 @@ long long * num_pixels;
 // Parameters for kmeans
 #define KMEANS_FLAGS KMEANS_RANDOM_CENTERS
 #define KMEANS_ATTEMPTS 3
-TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 10, 1.0);
+TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 20, 1.0);
 
 #define FT_0_WT 10.0f
 #define FT_1_WT 3.0f
@@ -115,25 +115,17 @@ void convert_from_feature_space(const Mat& src, Mat& out, Size out_s)
 		++oit;		
 	}
 
-	printf("converting from feature space.");
-	print_dim("src", src);
-	print_dim("img", img);
-
 	if (oit != img.end<Vec3b>())
 	{
 		printf("Output iterator misaligned. ERRROR.");
 	}
 
 	cvtColor(img, out, CV_HSV2BGR, 3); // remap color space
-	print_dim("out", out);
 	return;
 }
 
 void sort_colors(const Mat& colors, const Vec3f& t, Mat& colors_sorted)
 {
-	printf("Sorting...");
-	print_dim("colors", colors);
-
 	int K = colors.size().height;
 	Mat distances = Mat(K, 1, CV_32F);
 	
@@ -187,8 +179,6 @@ void sort_colors(const Mat& colors, const Vec3f& t, Mat& colors_sorted)
 		}
 	}
 
-	print_dim("colors_sorted", colors_sorted);
-
 	return;
 }
 
@@ -237,19 +227,17 @@ int get_centroids(const Mat& img, int K, Mat & centroids, Mat & colors, Mat & la
 	}
 
 	Size s = img.size();
-	printf("Image has dimensions (%d, %d).\n", s.height, s.width);
 
 	// Convert to CV_32F pixel array for kmeans
 	Mat px_array(img.total(), 3, CV_32F);
 	convert_to_feature_space(img, px_array, s);
-	printf("Converting to float vector.\n");
-	printf("Float array dimensions (%d, %d) with depth %d.\n", px_array.size().height, px_array.size().width, px_array.depth());
+	// printf("Converting to float vector.\n");
+	// printf("Float array dimensions (%d, %d) with depth %d.\n", px_array.size().height, px_array.size().width, px_array.depth());
 
 	// Do kmeans with global parameters
 	Mat centers;
-	//Mat centers(K, img.channels(), CV_32F);
 	float clustering_coeff = kmeans(px_array, K, labels, term_crit, KMEANS_ATTEMPTS, KMEANS_FLAGS, centers);
-	printf("Kmeans successful with clustering compactness %f.\n", clustering_coeff );
+	// printf("Kmeans successful with clustering compactness %f.\n", clustering_coeff );
 
 	/* Calculate centroids */
 	for (int k=0; k<K; k++)		// re-zero helper arrays
@@ -289,9 +277,9 @@ int get_centroids(const Mat& img, int K, Mat & centroids, Mat & colors, Mat & la
 
 	/* populate color reconstruction table */
 	int nearest_k = find_nearest_to_target(centers, K, target_ftr);
-	print_dim("centers", centers);
+	// print_dim("centers", centers);
 	convert_from_feature_space(centers, colors, Size(K,1));
-	print_dim("color table", colors);
+	// print_dim("color table", colors);
 
 	if (!colors.isContinuous())
 	{
