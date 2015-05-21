@@ -24,9 +24,9 @@ long long * num_pixels;
 #define KMEANS_ATTEMPTS 3
 TermCriteria term_crit(TermCriteria::COUNT + TermCriteria::EPS, 20, 1.0);
 
-#define FT_0_WT 20.0f
-#define FT_1_WT 5.0f
-#define FT_2_WT 1.0f
+#define FT_0_WT 0.79f
+#define FT_1_WT 0.18f
+#define FT_2_WT 0.03f
 
 // target color in feature space
 Vec3f target_ftr;
@@ -274,6 +274,9 @@ int get_centroids(const Mat& img, int K, Mat & centroids, Mat & colors, Mat & la
 		centroids.at<uint16_t>(1,u) = y_counts[u] / num_pixels[u];	// calculate average pixel row
 		centroids.at<uint16_t>(2,u) = 1;
 	}
+
+	// XXX: We need to determine if our target object isn't in frame at all 
+	// -- perhaps set max_distance threshold for maximum centroid distance from target color in feature space?
 
 	/* populate color reconstruction table */
 	int nearest_k = find_nearest_to_target(centers, K, target_ftr);

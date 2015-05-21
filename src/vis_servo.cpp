@@ -106,6 +106,20 @@ int cam_poll(int argc, char** argv)
 	target_bgr[2] = 151; // red
 	std::string img_path = pkg_path(1) + "/images/";
 
+	// parse cmd line
+	for (int i=0; i<argc; i++)
+	{
+		// Parse string
+		if (strncmp(argv[i], "K=", 2) == 0)
+		{
+			K = atoi(argv[i] + 2);
+		}
+		else
+		{
+			printf("Invalid argument: %s.\n", argv[i]);
+		}
+	}
+
 	// initialize cv 
 	initialize(K, target_bgr);
 
