@@ -316,7 +316,7 @@ float calc_fill_share(const Mat& labels, int k)
 void reconstruct(const Size& s, const Mat& centroids, const Mat& colors, const Mat& labels, int nearest_k, Mat& out)
 {
 	out = Mat(s.height, s.width, CV_8UC3);
-	MatIterator_<Vec3b> dit, dend;
+	MatConstIterator_<Vec3b> dit, dend;
 	MatIterator_<uchar> lit = labels.begin<uchar>();
 	int i,j;
 	i = j = 0;
