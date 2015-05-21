@@ -39,117 +39,174 @@ $ sudo dd bs=1m if=2015-05-05-raspbian-wheezy.img of=/dev/disk1
 3. Hook RPi to power and ethernet(access to internet).
 Connect To RPi with a screen via hdmi and boot rpi up.
 
-4. in ‘raspi-config’ shown on attached screen: 
+4. in ‘raspi-config’ shown on attached screen:
+Change Password (option 1) to ‘opadula1’ 
 Enable Camera (option 5.)
 Advanced options (option 8.)
 	A4 SSH (enable)
 	A0 Update tool to the latest version
 <Finish> raspi-config 
 
-5. Upgrade/update kernel
-	sudo apt-get update
-	sudo apt-get upgrade
-
-6. Set up partition table
-	Expand mmcblk0p2 to reasonable size (4 GB) for system files:
+5. Set up partition table
+	Expand mmcblk0p2 to reasonable size (6 GB) for system files:
 	$ sudo fdisk /dev/mmcblk0
 	command: p
 	then command: d 2
-	then: n p 2 122880 7935380
+	then command: n p 2 122880 11841630
+	Note: the 11841630 is for approximately 6gb
 	then command: w
+	Note: writes the table
 	$ sudo shutdown -r now
 	
-	Create and format new partition: mmcblk0p3
-		This will store user files
-		Mount as /home
+	$ sudo resize2fs /dev/mmcblk0p2
+	$ df -h
+	this should show 47% use
 
-7. Clone fishcode repo
-	cd
-	mkdir ros
-	mkdir ros/src
-	cd ros/src
-	git clone https://rkk@login.csail.mit.edu:/afs/csail.mit.edu/group/drl/softrobotics/fishcode.git
-	cd fishcode
-	git checkout dev
+	Create and format new partition: mmcblk0p3 
+	(This will store user files):	
+	$ sudo fdisk /dev/mmcblk0
+	command: n p 3 11841631 61407231
+	command: w
+	$ sudo shutdown -r now
+	$ sudo mkfs.ext4 /dev/mmcblk0p3
+	Mount your new partition:
+	$ sudo mount /dev/mmcblk0p3 /media/tmp
+	$ cd /home
+	$ sudo cp -rp ./ /media/tmp
+	$ sudo umount /media/tmp
+	$ sudo rm -rf /media/tmp 
+	#(get rid of the tmp folder)
+	$ sudo mv /home /old_home
+	$ sudo mkdir /home
+	the add the following line to /etc/fstab/:
+	/dev/mmcblk0p3 /home ext4 defaults,noatime,nodiratime 0 0
+	$ sudo mount /home
+	After you have confirmed everything is working and copied over and you don't need 	your old home directory, you can delete it.
+	$ sudo rm -fr /old_home
 
-8. Configure Edimax wifi dongle and replace fstab
-	sudo apt-get install wpasupplicant
-	cd ~/ros/src/fishcode/rpi_setup
-	sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
-	sudo cp 8192cu.conf /etc/modprobe.d/
-	sudo cp fstab /etc/fstab
+6. Change keyboard Layout
+	$ sudo vi /etc/default/keyboard
+	It should look like this:
+	# KEYBOARD CONFIGURATION FILE
+	# Consult the keyboard(5) manual page.
+	XKBMODEL="pc105"
+	XKBLAYOUT="us"
+	XKBVARIANT=""
+	XKBOPTIONS=""
 
-9. Reboot to remount system filesystems read-only
-	sudo reboot
-	If there are errors, try to fix
+	BACKSPACE="guess"
+	
+	then save	
 
-10. Install ROS Indigo -- big step
+7. Upgrade/update kernel
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
+
+8. Clone fishcode repo
+	$ cd ~
+	$ mkdir ros
+	$ mkdir ros/src
+	$ cd ros/src
+	$ git clone rkk@login.csail.mit.edu:/afs/csail.mit.edu/group/drl/softrobotics/fishcode.git
+	$ cd fishcode
+	$ git checkout dev
+
+9. Install vim
+	$ sudo apt-get install vim
+
+10. Configure Edimax wifi dongle and replace fstab
+	# Get wpasupplicant(probably not necessary)
+	$ sudo apt-get install wpasupplicant 
+	$ cd ~/ros/src/fishcode/rpi_setup
+	
+	# Make a backup of the wifi settings:
+	$ sudo cp /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.bk
+	
+	# add the wifi of the access point
+	$ sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
+	
+	# copy settings for wifi:
+	$ sudo cp 8192cu.conf /etc/modprobe.d/
+	
+	# make a backup of fstab
+	$ sudo cp /etc/fstab /etc/fstab.bk
+	
+	# copy the fstab		
+	$ sudo cp fstab /etc/fstab
+
+11. Reboot to remount system filesystems read-only
+	$ sudo reboot
+	# If there are errors, try to fix	- TODO: what could happen here?
+
+12. Install ROS Indigo -- big step
 	[from instructions online at http://wiki.ros.org/ROSberryPi/Installing%20ROS%20Indigo%20on%20Raspberry%20Pi]
 
 	# re-mount system partition as writeable for this install
-	sudo mount /dev/mmcblk0p2 -o=remount,rw
+	$ sudo mount /dev/mmcblk0p2 -o remount,rw
 
 	# setup ROS Repos
-	sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu wheezy main" > /etc/apt/sources.list.d/ros-latest.list'
-	wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
-	sudo apt-get update
+	$ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu wheezy main" > /etc/apt/sources.list.d/ros-latest.list'
+	$ wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
+	$ sudo apt-get update
+	$ sudo apt-get upgrade
 
 	# install bootstrap dependencies
-	sudo apt-get install python-setuptools python-pip python-yaml python-argparse python-distribute python-docutils python-dateutil python-setuptools python-six
-	sudo pip install rosdep rosinstall_generator wstool rosinstall
+	$ sudo apt-get install python-setuptools python-pip python-yaml python-argparse python-distribute python-docutils python-dateutil python-setuptools python-six
+	$ sudo pip install rosdep rosinstall_generator wstool rosinstall
 
 	# initialize rosdep
-	sudo rosdep init
-	rosdep update
-
+	$ sudo rosdep init
+	$ rosdep update
+	
+	# Now actual installation of ROS Indigo begins
 	# create catkin workspace
-	mkdir ~/ros_catkin_ws
-	cd ~/ros_catkin_ws
+	$ mkdir ~/ros_catkin_ws
+	$ cd ~/ros_catkin_ws
 
-	# dl Ros source
-	rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo-ros_comm-wet.rosinstall
-	wstool init src indigo-ros_comm-wet.rosinstall
+	# download Ros source (this step will take a while) (ROS-Comm: (recommended) ROS package, build, and communication libraries. No GUI tools.)
+	$ rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo-ros_comm-wet.rosinstall
+	$ wstool init src indigo-ros_comm-wet.rosinstall
+	
+	# only ros-comm and desktop variants tested on raspberry pi…
 
-	# Resolve dependencies
-	mkdir ~/ros_catkin_ws/external_src
-	sudo apt-get install checkinstall cmake
-	sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
-	sudo apt-get update
+	# Resolve dependencies (Before you can build your catkin workspace you need to make sure that you have all the required dependencies.)
+	# (Needed for Ros_Comm: libconsole-bridge-dev and liblz4-dev)
+	$ mkdir ~/ros_catkin_ws/external_src
+	$ sudo apt-get install checkinstall cmake
+	$ sudo sh -c 'echo "deb-src http://mirrordirector.raspbian.org/raspbian/ testing main contrib non-free rpi" >> /etc/apt/sources.list'
+	$ sudo apt-get update
 
 	# Install libconsole-bridge-dev
-	cd ~/ros_catkin_ws/external_src
-	sudo apt-get build-dep console-bridge
-	apt-get source -b console-bridge
-	sudo dpkg -i libconsole-bridge0.2_*.deb libconsole-bridge-dev_*.deb
+	$ cd ~/ros_catkin_ws/external_src
+	$ sudo apt-get build-dep console-bridge
+	$ apt-get source -b console-bridge
+	$ sudo dpkg -i libconsole-bridge0.2_*.deb libconsole-bridge-dev_*.deb
 
 	# Install liblz4-dev
-	cd ~/ros_catkin_ws/external_src
-	apt-get source -b lz4
-	sudo dpkg -i liblz4-*.deb
+	$ cd ~/ros_catkin_ws/external_src
+	$ apt-get source -b lz4
+	$ sudo dpkg -i liblz4-*.deb
 
 	# Resolve remaining dependencies with rosdep
-	cd ~/ros_catkin_ws
-	rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+	$ cd ~/ros_catkin_ws
+	 rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:wheezy
+	ERROR: the following rosdeps failed to install
+  	apt: command [sudo -H apt-get install -y python-rospkg] failed
+  	apt: command [sudo -H apt-get install -y python-catkin-pkg] failed
+  	apt: command [sudo -H apt-get install -y python-rosdep] failed
+  	apt: Failed to detect successful installation of [python-rospkg]
+  	apt: Failed to detect successful installation of [python-catkin-pkg]
+  	apt: Failed to detect successful installation of [python-rosdep]
 
 	# Build the workspace and install
 	sudo ./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/indigo
 
-	# Add the following lines to ~/.bashrc
+	# Add the following line to ~/.bashrc
 	source /opt/ros/indigo/setup.bash
-	source ~/ros/devel/setup.bash
 
-11. Install rpi camera library
-	cd ~/ros/src/fishcode
-	# Extract raspicam-0.1.3.zip to ~ directory
-	unzip raspicam-0.1.3.zip -d ~
+8. XXX Install rpi camera library
 
-	# Follow setup directions within raspicam-0.1.3 folder to build and install libraspicam (without OpenCV plugin)
+9. XXX Install OpenCV
 
-12. Install OpenCV
-	sudo apt-get install ros-indigo-opencv3
 
-13. Build fishcode
-	cd ~/ros/src/
-	catkin_init_workspace
-	cd ..
-	catkin_make
+$ sudo mount /dev/mmcblk0p2 -o remount,ro
