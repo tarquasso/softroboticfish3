@@ -43,6 +43,7 @@ Connect To RPi with a screen via hdmi and boot rpi up.
 Change Password (option 1) to ‘opadula1’ 
 Enable Camera (option 5.)
 Advanced options (option 8.)
+	A8 Serial (disable) # so ttyAMA0 is free for mBed comm
 	A4 SSH (enable)
 	A0 Update tool to the latest version
 <Finish> raspi-config 
@@ -263,6 +264,3 @@ http://sourceforge.net/projects/raspicam/files/?
 	
 	#test it: this should work and save 3 files
 	$ raspicam_test
-
-	
-
