@@ -98,6 +98,11 @@ int cv_test(int argc, char** argv)
 }
 int cam_poll(int argc, char** argv)
 {
+	ros::init("vis_servo");
+	ros::NodeHandle nh;
+
+	ROS_INFO("Vis servo started.")
+	
 	// default arguments
 	int K = 4;
 	Vec3b target_bgr;
@@ -105,19 +110,27 @@ int cam_poll(int argc, char** argv)
 	target_bgr[1] = 100;	// green
 	target_bgr[2] = 180; 	// red
 	std::string img_path = pkg_path(1) + "/images/";
+	bool debug = false;
 
-	// parse cmd line
-	for (int i=1; i<argc; i++)
+	if (nh.hasParam("debug"))
 	{
-		// Parse string
-		if (strncmp(argv[i], "K=", 2) == 0)
-		{
-			K = atoi(argv[i] + 2);
-		}
-		else
-		{
-			printf("Invalid argument: %s.\n", argv[i]);
-		}
+		nh.getParam("debug", debug);
+	}
+	if (nh.hasParam("K"))
+	{
+		nh.getParam("K", K);
+	}
+	if (nh.hasParam("target_bgr_b"))
+	{
+		nh.getParam("target_bgr_b", target_bgr[0]);
+	}
+	if (nh.hasParam("target_bgr_g"))
+	{
+		nh.getParam("target_bgr_g", target_bgr[1]);
+	}
+	if (nh.hasParam("target_bgr_r"))
+	{
+		nh.getParam("target_bgr_r", target_bgr[2]);
 	}
 
 	// initialize cv 
@@ -135,11 +148,11 @@ int cam_poll(int argc, char** argv)
 	cam.set(CV_CAP_PROP_SATURATION, 50);
 	cam.set(CV_CAP_PROP_GAIN, 50);
 
-	printf("Opening raspicam.\n");
+	ROS_INFO("Opening raspicam.\n");
 	cam.open();	// open and start capturing
 	if (!cam.isOpened())
 	{
-		printf("Failed to open raspicam.\n");
+		ROS_ERROR("Failed to open raspicam.\n");
 		return 1;
 	}
 
@@ -169,17 +182,18 @@ int cam_poll(int argc, char** argv)
 		// import into Mat object
 		cam.retrieve(frame_raw);
 		ROS_INFO("Frame %d captured.", frame_id);
-//		print_dim("Frame_Raw", frame_raw);
 		resize(frame_raw, frame, Size(RES_W, RES_H));
-//		print_dim("Frame Reduced", frame);
 
 		// save image to file for testing purposes
-//		std::sprintf(filename, "frame%d.jpg", frame_id);
-//		imwrite((img_path + filename).c_str(), frame);
-//		printf("Frame captured and saved in %s.\n",(img_path+filename).c_str());
+		if (debug)
+		{
+			std::sprintf(filename, "frame%d.jpg", frame_id);
+			imwrite((img_path + filename).c_str(), frame);
+			ROS_INFO("Frame captured and saved in %s.\n",(img_path+filename).c_str());
+		}
 
 		// calculate centroids
-		ROS_INFO("Calculating centroids.");
+		ROS_INFO("Calculating centroids...");
 		Mat centroids(3, K, CV_16U);
 		Mat colors(1, K, CV_8UC3);
 		Mat labels(frame.total(), 1, CV_8U);
@@ -203,12 +217,14 @@ int cam_poll(int argc, char** argv)
 		ROS_INFO("Vis offset to target is (%f, %f), fill share is %f", vmsg.xoff, vmsg.yoff, vmsg.fill_share);
 
 		// reconstruct image
-//		Mat out;
-//		reconstruct(frame.size(), centroids, colors, labels, nearest_centroid, out);
-//		std::sprintf(filename, "frame%d_reduced.jpg", frame_id);
-//		imwrite((img_path + filename).c_str(), out);
-//		printf("Reduced frame saved in %s.\n",(img_path+filename).c_str());
-
+		if (debug)
+		{
+			Mat out;
+			reconstruct(frame.size(), centroids, colors, labels, nearest_centroid, out);
+			std::sprintf(filename, "frame%d_reduced.jpg", frame_id);
+			imwrite((img_path + filename).c_str(), out);
+			ROS_INFO("Reduced frame saved in %s.\n",(img_path+filename).c_str());
+		}
 
 		printf("\n");
 		frame_id++;

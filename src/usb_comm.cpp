@@ -24,7 +24,7 @@ SerialComm::SerialComm(ros::NodeHandle& nh)
 {
 	_nh = nh;
 
-	std::string port_name = "/dev/ttyUSB0";
+	std::string port_name = "/dev/ttyAMA0";
 	printf("Opening serial port at %s.\n", port_name.c_str());
 	_io = new io_service();
 	_serial = new serial_port(*_io);

@@ -28,7 +28,10 @@ int main(int argc, char** argv)
 	sub_VisOffset = nh.subscribe<VisOffset>("fishcode/vis_offset", 1, boost::bind(&cb_VisOffset, _1));
 	pub_SetSwimMode = nh.advertise<SetSwimMode>("fishcode/swim_mode_set", 1);
 
+	ROS_INFO("Commander started.");
+
 	commandSwimMode(curr_swim_mode);
+	ROS_INFO("Set swim mode to %d.", curr_swim_mode);
 
 	// XXX Implement target color service client
 	
