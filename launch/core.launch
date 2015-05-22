@@ -1,12 +1,11 @@
 <launch>
-  <arg name="debug default="false" type="bool" />
-  <arg name="K" default="4" type="int" />
+  <arg name="debug" default="false" />
+  <arg name="K" default="4" />
+
+  <param name="debug" value="$(arg debug)" type="bool" />
+  <param name="K" value="$(arg K)" type="int" />
 
   <node name="comm" pkg="fishcode" type="usb_comm" />
   <node name="commander" pkg="fishcode" type="commander" />
-  <node name="vis_servo" pkg="fishcode" type="vis_servo" >
-    <arg name="debug" value="$(arg debug)" type="bool" />
-    <arg name="K" value="$(arg K)" type="int" />
-  </node>
 
 </launch>
