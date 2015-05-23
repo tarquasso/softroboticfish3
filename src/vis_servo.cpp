@@ -98,17 +98,18 @@ int cv_test(int argc, char** argv)
 }
 int cam_poll(int argc, char** argv)
 {
-	ros::init("vis_servo");
+	ros::init(argc, argv, "vis_servo");
 	ros::NodeHandle nh;
 
-	ROS_INFO("Vis servo started.")
+	ROS_INFO("Vis servo started.");
 	
 	// default arguments
 	int K = 4;
-	Vec3b target_bgr;
-	target_bgr[0] = 77;	 	// blue
-	target_bgr[1] = 100;	// green
-	target_bgr[2] = 180; 	// red
+	Vec3b target_bgr;	// default target color
+	int b = 77;				
+	int g = 100;
+	int r = 180;
+
 	std::string img_path = pkg_path(1) + "/images/";
 	bool debug = false;
 
@@ -122,16 +123,19 @@ int cam_poll(int argc, char** argv)
 	}
 	if (nh.hasParam("target_bgr_b"))
 	{
-		nh.getParam("target_bgr_b", target_bgr[0]);
+		nh.getParam("target_bgr_b", b);
 	}
 	if (nh.hasParam("target_bgr_g"))
 	{
-		nh.getParam("target_bgr_g", target_bgr[1]);
+		nh.getParam("target_bgr_g", g);
 	}
 	if (nh.hasParam("target_bgr_r"))
 	{
-		nh.getParam("target_bgr_r", target_bgr[2]);
+		nh.getParam("target_bgr_r", r);
 	}
+	target_bgr[0] = b;
+	target_bgr[1] = g;
+	target_bgr[2] = r;
 
 	// initialize cv 
 	initialize(K, target_bgr);
@@ -157,8 +161,6 @@ int cam_poll(int argc, char** argv)
 	}
 
 	// initialize ros
-	ros::init(argc, argv, "vis_servo");
-	ros::NodeHandle nh;
 	ros::Publisher pub = nh.advertise<fishcode::VisOffset>("vis_offset", 5);
 	ros::ServiceServer set_bgr_srv = nh.advertiseService("set_target_bgr", set_target_bgr_cb);
 
