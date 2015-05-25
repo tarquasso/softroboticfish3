@@ -1,5 +1,12 @@
 TODOs:
 
+- ssh via bluetooth
+
+
+- recheck for dropped wifi
+http://weworkweplay.com/play/rebooting-the-raspberry-pi-when-it-loses-wireless-connection-wifi/
+
+
 http://k3a.me/how-to-make-raspberrypi-truly-read-only-reliable-and-trouble-free/
 Kris's comment:
 That looks pretty thorough. There are a few things in there that seem pretty easy/worthwhile, like setting up the watchdog and removing those unnecessary services. Also that clock syncing would be handy.
