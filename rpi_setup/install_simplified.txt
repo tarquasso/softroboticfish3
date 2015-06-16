@@ -1,0 +1,179 @@
+RaspPi SD Card Initialization
+
+1. Download latest image of Raspian Wheezy
+Used here: RASPBIAN - Debian Wheezy 
+Release date: 2015-05-05
+Default login:pi / raspberry
+Kernel version:3.18
+https://www.raspberrypi.org/downloads/
+Verify SHA-1:cb799af077930ff7cbcfaa251b4c6e25b11483de
+$ openssl sha1 2015-05-05-raspbian-wheezy.zip
+
+2. Write the downloaded image to a card according to this guideline:
+https://www.raspberrypi.org/documentation/installation/installing-images/README.md
+	cd into the folder with the image
+$ diskutil list
+/dev/disk0
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:      GUID_partition_scheme                        *1.0 TB     disk0
+   1:                        EFI EFI                     209.7 MB   disk0s1
+   2:                  Apple_HFS Macintosh HD            698.0 GB   disk0s2
+   3:                 Apple_Boot Recovery HD             650.0 MB   disk0s3
+   4:       Microsoft Basic Data BOOTCAMP                301.7 GB   disk0s4
+/dev/disk1
+   #:                       TYPE NAME                    SIZE       IDENTIFIER
+   0:     FDisk_partition_scheme                        *31.4 GB    disk1
+   1:             Windows_FAT_32 NO NAME                 31.4 GB    disk1s1
+
+Identify the disk (not partition) of your SD card e.g. disk1 
+
+$ diskutil unmountDisk /dev/disk1
+Unmount of all volumes on disk1 was successful
+
+$ sudo dd bs=1m if=2015-05-05-raspbian-wheezy.img of=/dev/disk1
+(This takes several minutes.)
+3125+0 records in
+3125+0 records out
+3276800000 bytes transferred in 950.170971 secs (3448643 bytes/sec)
+
+3. Hook RPi to power and ethernet(access to internet).
+Connect To RPi with a screen via hdmi and boot rpi up.
+
+4. in ‘raspi-config’ shown on attached screen:
+Change Password (option 1) to ‘opadula1’ 
+Enable Camera (option 5.)
+Internationalisation Options to set locale to en_US (UTF8), also enable all other en_US locales and the en_GB ones
+ keyboard to generic 105 English (US) and timezone to America/New York (option 4.)
+Advanced options (option 8.)
+	A8 Serial (disable) # so ttyAMA0 is free for mBed comm
+	A6 SPI (enable, load module by default)
+	A4 SSH (enable)
+	A2 Hostname: rpi0x (x for the number)
+	A0 Update tool to the latest version
+<Finish> raspi-config 
+
+- LOGIN: Username: pi, password: opadula1
+
+- setup wireless
+according to https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md
+Open the wpa-supplicant configuration file in nano:
+$ sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+
+Go to the bottom of the file and add the following:
+network={
+    ssid="animaltesting"
+    psk="fishfish"
+}
+
+Now save the file by pressing ctrl+x then y, then finally press enter.
+
+At this point, wpa-supplicant will normally notice a change has occurred within a few seconds,
+and it will try and connect to the network. 
+ If it does not, either manually restart the interface with 
+ $ sudo ifdown wlan0 
+ and 
+ $ sudo ifup wlan0, 
+ or reboot your Raspberry Pi with 
+ $ sudo reboot.
+
+You can verify if it has successfully connected using 
+$ ifconfig wlan0. 
+If the inet addr field has an address beside it, the Pi has connected to the network. 
+If not, check your password and ESSID are correct.
+
+
+Mac reservation on router (192.168.1.1)
+rpi01 192.168.1.119
+
+
+- Update your RPi so you have the recent software
+$ sudo apt-get update; sudo apt-get upgrade
+
+- Reboot in case of bootloader or kernel version change
+$ sudo reboot
+
+- Install vim editor
+$ sudo apt-get install vim
+
+- Remove unwanted package and services files
+$ sudo apt-get remove --purge wolfram-engine triggerhappy anacron logrotate dbus dphys-swapfile xserver-common lightdm
+TODO: this did not remove 'cron' and 'fake-hwclock', possible do later
+$ sudo insserv -r x11-common; sudo apt-get autoremove --purge
+
+- Replace log management with busybox one
+$ sudo apt-get install busybox-syslogd; sudo dpkg --purge rsyslog
+This will put log into circular memory buffer, you will able to see log using  logread command
+
+- Disable swap and filesystem check and set it to read-only.
+$ sudo vim /boot/cmdline.txt
+append to the first line this the following two keywords:
+fastboot noswap
+
+- Move some system files to temp filesystem
+save contents of these
+$ sudo cp /var/lib/dhcp/dhclient.leases /tmp
+
+$ sudo reboot
+
+fix /etc/network/interfaces file
+CONTENT:
+auto lo
+iface lo inet loopback
+
+auto eth0
+allow-hotplug eth0
+iface eth0 inet manual
+
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet manual
+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+auto wlan1
+allow-hotplug wlan1
+iface wlan1 inet manual
+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+- Setup the Internet clock sync
+$ sudo apt-get install ntp
+then go to menu “Internationalisation Options”  then “Change Timezone” and select your time zone:
+$ sudo raspi-config
+
+- Change Hourly Cron Script:
+$ sudo vim /etc/cron.hourly/fake-hwclock
+
+It should become:
+#!/bin/sh
+#
+# Simple cron script - save the current clock periodically in case of
+# a power failure or other crash
+ 
+if (command -v fake-hwclock >/dev/null 2>&1) ; then
+  mount -o remount,rw /
+  fake-hwclock save
+  mount -o remount,ro /
+fi
+
+- Remove some startup scripts
+$ sudo insserv -r bootlogs; sudo insserv -r console-setup
+
+- Tell the kernel to mount root filesystem read-only!
+$ sudo vim /boot/cmdline.txt
+append to the first line this the following keyword using a space before:
+ro
+
+- Add “,ro” flag to both block devices in /etc/fstab to let the system know you want to 
+mount them read-only:
+
+1
+2
+3
+4
+5
+6
+proc            /proc             proc    defaults                   0       0
+/dev/mmcblk0p1  /boot             vfat    defaults                   0       2
+/dev/mmcblk0p2  /                 ext4    defaults,noatime           0       1
+tmpfs           /tmp              tmpfs   defaults,noatime,mode=1777 0       0
+tmpfs           /var/log          tmpfs   defaults,noatime,mode=0755 0       0
+tmpfs           /var/lock         tmpfs   defaults,noatime,mode=0755 0       0
