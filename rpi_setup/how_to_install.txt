@@ -1,5 +1,9 @@
 RaspPi SD Card Initialization
 
+Please review and also compare with Duckietown documentation:
+http://duckietown.mit.edu/
+
+
 1. Download latest image of Raspian Wheezy
 Used here: RASPBIAN - Debian Wheezy 
 Release date: 2015-05-05
@@ -127,19 +131,25 @@ Advanced options (option 8.)
 	# add the wifi of the access point
 	$ sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
 	
+
+############THIS IS ALL FOR READ ONLY FILE SYSTEM##############
 	# copy settings for wifi:
 	$ sudo cp 8192cu.conf /etc/modprobe.d/
 	
-	# make a backup of fstab
+	# make a backup of fstab 
 	$ sudo cp /etc/fstab /etc/fstab.bk
 	
 	# copy the fstab		
 	$ sudo cp fstab /etc/fstab
+############END OF FILE SYSTEM SPECIFIC##############
+
 
 11. Reboot to remount system filesystems read-only
 	$ sudo reboot
 	# If there are errors, try to fix	- TODO: what could happen here?
 
+
+############THIS IS ALL FOR READ ONLY FILE SYSTEM##############
 12. Disable filesystem check and swap
 	$ sudo mount /dev/mmcblk0p2 -o remount,rw
 	$ vim /boot/cmdline.txt 
@@ -147,6 +157,7 @@ Advanced options (option 8.)
 	fastboot noswap
 	$ sudo mount /dev/mmcblk0p2 -o remount,ro
 	$ sudo reboot
+############END OF FILE SYSTEM SPECIFIC##############
 
 
 13. Install ROS Indigo -- big step
