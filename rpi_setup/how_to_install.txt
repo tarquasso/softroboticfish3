@@ -132,9 +132,10 @@ Advanced options (option 8.)
 	$ sudo cp wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
 	
 
-############THIS IS ALL FOR READ ONLY FILE SYSTEM##############
 	# copy settings for wifi:
 	$ sudo cp 8192cu.conf /etc/modprobe.d/
+
+############THIS IS ALL FOR READ ONLY FILE SYSTEM##############
 	
 	# make a backup of fstab 
 	$ sudo cp /etc/fstab /etc/fstab.bk
